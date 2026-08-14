@@ -1,4 +1,4 @@
-package com.aicommitmessage;
+package org.aicommitmessage;
 
 import com.intellij.openapi.options.Configurable;
 

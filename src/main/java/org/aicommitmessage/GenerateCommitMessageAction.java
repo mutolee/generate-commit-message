@@ -1,4 +1,4 @@
-package com.aicommitmessage;
+package org.aicommitmessage;
 
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;

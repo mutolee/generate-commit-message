@@ -11,7 +11,7 @@ plugins {
 }
 
 // 对应 Maven 的 <groupId>，用于标识项目所属的组织或命名空间。
-group = "com.aicommitmessage"
+group = "org.aicommitmessage"
 
 // 对应 Maven 的 <version>，同时会成为生成插件包的版本号。
 // 发布新版本时应按照项目的版本策略递增此值。
