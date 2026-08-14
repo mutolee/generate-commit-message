@@ -307,7 +307,7 @@ public final class GenerateCommitMessageAction extends AnAction {
      */
     private static String request(String diff, CommitMessageSettings.State settings) throws Exception {
         if (settings.apiKey == null || settings.apiKey.isBlank()) {
-            throw new IllegalStateException("请先在“设置 | 工具 | AI 提交信息”中配置 API 密钥。");
+            throw new IllegalStateException("请先在“设置 | 工具 | AI Commit Message”中配置 API 密钥。");
         }
         // 替换模板变量，让用户可以控制生成规则，同时由插件注入语言和实际差异。
         String promptTemplate = settings.getPromptTemplate();
@@ -340,6 +340,6 @@ public final class GenerateCommitMessageAction extends AnAction {
     }
 
     private static void showNotification(Project project, String title, String content, NotificationType type) {
-        NotificationGroupManager.getInstance().getNotificationGroup("AI 提交信息").createNotification(title, content, type).notify(project);
+        NotificationGroupManager.getInstance().getNotificationGroup("AI Commit Message").createNotification(title, content, type).notify(project);
     }
 }

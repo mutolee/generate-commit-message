@@ -21,7 +21,7 @@ import java.time.Duration;
 import java.util.Objects;
 
 /**
- * 提供 AI 提交信息服务的设置页面，并允许用户定制提交信息提示词。
+ * 提供 AI Commit Message服务的设置页面，并允许用户定制提交信息提示词。
  *
  * @author 杨林恩
  */

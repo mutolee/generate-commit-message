@@ -3,10 +3,10 @@
     <id>org.aicommitmessage</id>
 
     <!-- IDEA 插件管理器中显示的插件名称。 -->
-    <name>AI 提交信息</name>
+    <name>AI Commit Message</name>
 
     <!-- 插件供应商信息，email 用于在插件详情中提供联系地址。 -->
-    <vendor email="mutolee@qq.com">AI 提交信息</vendor>
+    <vendor email="mutolee@qq.com">AI Commit Message</vendor>
 
     <!-- 插件简介，会显示在插件详情页；CDATA 可避免描述中的特殊字符被 XML 当作标签解析。 -->
     <description><![CDATA[根据已暂存的代码变更，一键生成 Git 提交信息。]]></description>
@@ -20,7 +20,7 @@
     <!-- IntelliJ Platform 扩展点注册区；默认扩展点命名空间为 com.intellij。 -->
     <extensions defaultExtensionNs="com.intellij">
         <!-- 通知组：用于显示提交信息生成成功或失败的气泡通知。 -->
-        <notificationGroup id="AI 提交信息" displayType="BALLOON"/>
+        <notificationGroup id="AI Commit Message" displayType="BALLOON"/>
 
         <!--
             应用级设置页面：instance 指向 Configurable 实现类，

@@ -5,7 +5,7 @@ import com.intellij.openapi.components.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * AI 提交信息生成器的持久化配置，保存兼容 OpenAI 的服务地址、模型和密钥。
+ * AI Commit Message生成器的持久化配置，保存兼容 OpenAI 的服务地址、模型和密钥。
  *
  * @author 杨林恩
  */
