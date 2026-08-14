@@ -84,8 +84,8 @@ public final class GenerateCommitMessageAction extends AnAction {
     /**
      * 获取 Commit 工具窗口中已勾选文件的差异内容。
      *
-     * @param project 当前 IDEA 项目
-     * @param includedChanges 已勾选的版本控制变更
+     * @param project                  当前 IDEA 项目
+     * @param includedChanges          已勾选的版本控制变更
      * @param includedUnversionedFiles 已勾选的未版本控制文件
      * @return 可用于生成提交信息的差异文本
      * @throws Exception Git 命令执行或文件内容读取失败时抛出
@@ -135,8 +135,8 @@ public final class GenerateCommitMessageAction extends AnAction {
     /**
      * 将文件路径转换为项目相对路径并加入去重集合。
      *
-     * @param projectRoot 项目根目录
-     * @param filePath IDEA 文件路径
+     * @param projectRoot   项目根目录
+     * @param filePath      IDEA 文件路径
      * @param relativePaths 接收项目相对路径的集合
      */
     private static void addRelativePath(Path projectRoot, FilePath filePath, Set<String> relativePaths) {
@@ -151,8 +151,8 @@ public final class GenerateCommitMessageAction extends AnAction {
      * 将已勾选的未版本控制文件追加为新增文件形式的文本补丁。
      *
      * @param projectRoot 项目根目录
-     * @param filePath 未版本控制文件路径
-     * @param diff 接收补丁文本的缓冲区
+     * @param filePath    未版本控制文件路径
+     * @param diff        接收补丁文本的缓冲区
      * @throws Exception 文件读取失败时抛出
      */
     private static void appendUnversionedFile(Path projectRoot, FilePath filePath, StringBuilder diff) throws Exception {

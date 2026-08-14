@@ -11,13 +11,5 @@ pluginManagement {
     }
 }
 
-// 统一配置普通项目依赖的仓库，作用类似 Maven 根 POM 中集中声明 repositories。
-dependencyResolutionManagement {
-    repositories {
-        // Maven 中央仓库，供 build.gradle.kts 中 dependencies { } 声明的依赖使用。
-        mavenCentral()
-    }
-}
-
 // Gradle 根项目名称，作用接近 Maven 的 <artifactId>，也会用于默认产物名称。
 rootProject.name = "ai-commit-message"

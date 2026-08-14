@@ -6,8 +6,8 @@ plugins {
     id("java")
 
     // IntelliJ Platform 官方 Gradle 插件：负责下载 IDEA SDK、校验插件配置、启动沙箱 IDEA，
-    // 以及将插件打包成可安装的 ZIP。2.4.0 是构建插件版本，不是目标 IDEA 版本。
-    id("org.jetbrains.intellij.platform") version "2.4.0"
+    // 以及将插件打包成可安装的 ZIP。2.18.1 是构建插件版本，不是目标 IDEA 版本。
+    id("org.jetbrains.intellij.platform") version "2.18.1"
 }
 
 // 对应 Maven 的 <groupId>，用于标识项目所属的组织或命名空间。
@@ -34,11 +34,6 @@ dependencies {
         // 使用 IntelliJ IDEA Community Edition 2024.3 作为插件的编译和测试平台。
         // 它相当于插件开发使用的 SDK，不会作为普通业务依赖打进插件包。
         intellijIdeaCommunity("2024.3")
-
-        // IntelliJ 官方字节码插桩工具。
-        // buildPlugin 在打包前会执行 instrumentCode；显式声明该依赖可确保插桩器、
-        // instrument-util 等工具使用与目标 IDEA SDK 匹配的版本，而不是依赖 IDE 的本地缓存。
-        instrumentationTools()
     }
 }
 
@@ -65,9 +60,8 @@ java {
     }
 }
 
-// 本插件没有使用 IntelliJ GUI Designer 表单，也没有依赖需要 IDEA 字节码插桩的 API。
-// 关闭 instrumentCode 可以绕过 IntelliJ 2024.3 插桩器在部分 Windows JDK 安装上的
-// “<JDK>\\Packages does not exist” 路径兼容问题；Java 编译和最终插件 ZIP 打包仍会正常执行。
+// 当前 Windows JDK 安装缺少 IntelliJ 插桩器所需的 Packages 目录，因此暂时跳过插桩任务。
+// 本插件未使用 GUI Designer 表单，禁用该任务不会影响现有 Java 代码运行。
 tasks.named("instrumentCode") {
     enabled = false
 }
