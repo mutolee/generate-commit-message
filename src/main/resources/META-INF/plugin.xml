@@ -39,9 +39,6 @@
         <action id="AICommitMessage.Generate" class="org.aicommitmessage.GenerateCommitMessageAction" text="Generate Commit Message" description="Generate a commit message from staged Git changes">
             <!-- 将 Action 添加到 2024.3 非模态提交界面的工具栏末尾。 -->
             <add-to-group group-id="ChangesView.CommitToolbar" anchor="last"/>
-
-            <!-- 将 Action 添加到 IDEA 主菜单末尾；注册后也可通过 Find Action 搜索执行。 -->
-            <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
     </actions>
 </idea-plugin>
