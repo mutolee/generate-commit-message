@@ -39,6 +39,10 @@ dependencies {
 
 // IntelliJ Platform 插件的专用元数据配置。
 intellijPlatform {
+    // IDEA 2024.3 内置的 Gradle 插件无法解析新版兼容性数据中的 Java 25。
+    // 本插件设置页无需生成额外的可搜索选项索引，关闭该步骤可避免构建沙箱遍历 Gradle 设置页时报错。
+    buildSearchableOptions = false
+
     pluginConfiguration {
         ideaVersion {
             // 插件支持的最低 IntelliJ Platform 构建号。
