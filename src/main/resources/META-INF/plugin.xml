@@ -1,0 +1,50 @@
+<idea-plugin>
+    <!-- 插件唯一 ID，类似 Maven 坐标中的 groupId 与 artifactId 组合；插件发布后不应随意修改。 -->
+    <id>com.aicommitmessage</id>
+
+    <!-- IDEA 插件管理器中显示的插件名称。 -->
+    <name>AI Commit Message</name>
+
+    <!-- 插件供应商信息，email 用于在插件详情中提供联系地址。 -->
+    <vendor email="mutolee@qq.com">AI Commit Message</vendor>
+
+    <!-- 插件简介，会显示在插件详情页；CDATA 可避免描述中的特殊字符被 XML 当作标签解析。 -->
+    <description><![CDATA[Generate a Git commit message from staged changes with one click.]]></description>
+
+    <!-- 基础平台依赖：表示本插件需要 IntelliJ Platform 提供的通用开放 API。 -->
+    <depends>com.intellij.modules.platform</depends>
+
+    <!-- Git 功能依赖：插件运行时要求 IDE 已启用内置的 Git4Idea 插件。 -->
+    <depends>Git4Idea</depends>
+
+    <!-- IntelliJ Platform 扩展点注册区；默认扩展点命名空间为 com.intellij。 -->
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- 通知组：用于显示提交信息生成成功或失败的气泡通知。 -->
+        <notificationGroup id="AI Commit Message" displayType="BALLOON"/>
+
+        <!--
+            应用级设置页面：instance 指向 Configurable 实现类，
+            parentId="tools" 表示页面显示在 Settings | Tools 下。
+        -->
+        <applicationConfigurable instance="com.aicommitmessage.CommitMessageConfigurable" displayName="AI Commit Message" parentId="tools"/>
+    </extensions>
+
+    <!-- Action 注册区：声明用户可以从菜单、工具栏或 Find Action 触发的操作。 -->
+    <actions>
+        <!--
+            生成提交信息的核心 Action。
+            id 是 IDEA 内部的唯一操作标识，class 指向 Java 实现类，
+            text 是界面显示名称，description 是操作说明和辅助提示。
+        -->
+        <action id="AICommitMessage.Generate" class="com.aicommitmessage.GenerateCommitMessageAction" text="Generate Commit Message" description="Generate a commit message from staged Git changes">
+            <!-- 将 Action 添加到 Git Commit 工具栏末尾。 -->
+            <add-to-group group-id="CommitToolbar" anchor="last"/>
+
+            <!-- 将 Action 添加到提交信息编辑器工具栏末尾。 -->
+            <add-to-group group-id="Vcs.Commit.Message.Editor.Toolbar" anchor="last"/>
+
+            <!-- 将 Action 添加到 IDEA 主菜单末尾；注册后也可通过 Find Action 搜索执行。 -->
+            <add-to-group group-id="MainMenu" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>
