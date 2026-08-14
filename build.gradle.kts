@@ -47,7 +47,7 @@ intellijPlatform {
         }
 
         // 插件版本更新说明，会写入最终生成的插件元数据。
-        changeNotes = "Generate commit messages from staged Git changes."
+        changeNotes = "支持根据已暂存的 Git 变更生成提交信息，并可自定义提示词模板。"
     }
 }
 
