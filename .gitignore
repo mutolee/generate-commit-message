@@ -4,9 +4,5 @@ build/
 *.iml
 .agent
 .codex
-/gradle
-/gradlew
-/gradlew.bat
 .agents
 .intellijPlatform
-gradle.properties

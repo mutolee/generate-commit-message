@@ -41,6 +41,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author 杨林恩
  */
 public final class GenerateCommitMessageAction extends AnAction {
+    private static final long MAX_UNVERSIONED_FILE_BYTES = 1024 * 1024;
     private static final Icon GENERATE_ICON = IconLoader.getIcon("/icons/commitMessage.svg", GenerateCommitMessageAction.class);
     private static final Icon STOP_ICON = IconLoader.getIcon("/icons/stopGeneration.svg", GenerateCommitMessageAction.class);
     private static final ConcurrentMap<Project, GenerationControl> RUNNING_GENERATIONS = new ConcurrentHashMap<>();
@@ -270,13 +271,57 @@ public final class GenerateCommitMessageAction extends AnAction {
         }
 
         String relativePath = projectRoot.relativize(absolutePath).toString().replace('\\', '/');
-        String content = java.nio.file.Files.readString(absolutePath, StandardCharsets.UTF_8);
+        if (java.nio.file.Files.size(absolutePath) > MAX_UNVERSIONED_FILE_BYTES) {
+            // 大文件不直接发送完整内容，避免提示词过大和内存占用异常。
+            appendUnavailableFileMarker(diff, relativePath, "文件超过 1 MiB，已省略内容");
+            return;
+        }
+        byte[] fileBytes = java.nio.file.Files.readAllBytes(absolutePath);
+        if (isBinaryFile(fileBytes)) {
+            // 图片、压缩包等二进制文件不能按 UTF-8 解码，只记录新增文件信息。
+            appendUnavailableFileMarker(diff, relativePath, "二进制文件，已省略内容");
+            return;
+        }
+
+        // 使用容错 UTF-8 解码，非 UTF-8 文本中的非法字节会被替换，不再抛出 Input length 异常。
+        String content = new String(fileBytes, StandardCharsets.UTF_8);
         diff.append("diff --git a/").append(relativePath).append(" b/").append(relativePath).append('\n')
                 .append("new file mode 100644\n")
                 .append("--- /dev/null\n")
                 .append("+++ b/").append(relativePath).append('\n')
                 .append("@@ -0,0 +1,").append(content.lines().count()).append(" @@\n");
         content.lines().forEach(line -> diff.append('+').append(line).append('\n'));
+    }
+
+    /**
+     * 判断文件内容是否包含常见二进制标记。
+     *
+     * @param fileBytes 文件字节内容
+     * @return 包含空字节时返回 {@code true}
+     */
+    private static boolean isBinaryFile(byte[] fileBytes) {
+        for (byte fileByte : fileBytes) {
+            if (fileByte == 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 为无法作为文本读取的新增文件追加可供模型理解的占位补丁。
+     *
+     * @param diff         接收补丁文本的缓冲区
+     * @param relativePath 项目相对路径
+     * @param reason       省略文件内容的原因
+     */
+    private static void appendUnavailableFileMarker(StringBuilder diff, String relativePath, String reason) {
+        diff.append("diff --git a/").append(relativePath).append(" b/").append(relativePath).append('\n')
+                .append("new file mode 100644\n")
+                .append("--- /dev/null\n")
+                .append("+++ b/").append(relativePath).append('\n')
+                .append("@@ 文件内容不可作为文本展示 @@\n")
+                .append('+').append(reason).append('\n');
     }
 
     /**
