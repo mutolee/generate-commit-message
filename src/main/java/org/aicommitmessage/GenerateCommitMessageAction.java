@@ -34,6 +34,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 /**
  * 从 IDEA 提交界面勾选的变更生成提交信息，支持写入提交框以及中途取消任务。
@@ -94,8 +96,24 @@ public final class GenerateCommitMessageAction extends AnAction {
                                 : "没有找到已暂存的变更，请先暂存文件再生成提交信息。");
                     }
                     indicator.setText("正在调用 AI 服务…");
-                    // 调用模型生成提交信息。
-                    String message = request(diff, CommitMessageSettings.getInstance().getState());
+                    StringBuilder streamedMessage = new StringBuilder();
+                    if (workflowUi != null) {
+                        // 在接收流式内容前清空提交框，后续增量内容将产生打字机式写入效果。
+                        SwingUtilities.invokeLater(() -> workflowUi.getCommitMessageUi().setText(""));
+                    }
+                    // 流式调用模型，并将每个增量片段实时写入提交信息编辑框。
+                    String message = request(diff, CommitMessageSettings.getInstance().getState(), delta -> {
+                        if (workflowUi == null || generationControl.isCancelled()) {
+                            return;
+                        }
+                        streamedMessage.append(delta);
+                        String currentMessage = streamedMessage.toString();
+                        SwingUtilities.invokeLater(() -> {
+                            if (!generationControl.isCancelled()) {
+                                workflowUi.getCommitMessageUi().setText(currentMessage);
+                            }
+                        });
+                    });
                     if (generationControl.isCancelled()) {
                         return;
                     }
@@ -347,10 +365,13 @@ public final class GenerateCommitMessageAction extends AnAction {
      *
      * @param diff     用于生成提交信息的 Git 差异
      * @param settings AI 服务及提示词配置
-     * @return 模型生成的提交信息
+     * @param onDelta 接收模型流式增量文本的回调
+     * @return 模型生成的完整提交信息
      * @throws Exception 请求发送、响应解析或配置校验失败时抛出
      */
-    private static String request(String diff, CommitMessageSettings.State settings) throws Exception {
+    private static String request(String diff,
+                                  CommitMessageSettings.State settings,
+                                  Consumer<String> onDelta) throws Exception {
         if (settings.apiKey == null || settings.apiKey.isBlank()) {
             throw new IllegalStateException("请先在“设置 | 工具 | AI Commit Message”中配置 API 密钥。");
         }
@@ -363,17 +384,55 @@ public final class GenerateCommitMessageAction extends AnAction {
             // 用户省略差异变量时仍自动附加差异，避免向模型发送缺少上下文的请求。
             prompt += "\n\n代码差异：\n" + diff;
         }
-        String body = "{\"model\":\"" + json(settings.model) + "\",\"messages\":[{\"role\":\"user\",\"content\":\"" + json(prompt) + "\"}],\"temperature\":0.2}";
+        String body = "{\"model\":\"" + json(settings.model)
+                + "\",\"messages\":[{\"role\":\"user\",\"content\":\"" + json(prompt)
+                + "\"}],\"temperature\":0.2,\"thinking\":{\"type\":\"disabled\"},\"stream\":true}";
         HttpRequest req = HttpRequest.newBuilder(URI.create(settings.endpoint)).timeout(Duration.ofSeconds(60)).header("Authorization", "Bearer " + settings.apiKey).header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(body)).build();
-        HttpResponse<String> response = HttpClient.newHttpClient().send(req, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<Stream<String>> response = HttpClient.newHttpClient().send(req, HttpResponse.BodyHandlers.ofLines());
         if (response.statusCode() / 100 != 2) {
-            throw new IllegalStateException("AI 服务返回 HTTP " + response.statusCode() + "：" + response.body());
+            try (Stream<String> responseLines = response.body()) {
+                throw new IllegalStateException("AI 服务返回 HTTP " + response.statusCode() + "："
+                        + String.join("\n", responseLines.toList()));
+            }
         }
-        Matcher m = Pattern.compile("\\\"content\\\"\\s*:\\s*\\\"((?:\\\\.|[^\\\"])*)\\\"").matcher(response.body());
-        if (!m.find()) {
+        StringBuilder message = new StringBuilder();
+        Pattern contentPattern = Pattern.compile("\\\"content\\\"\\s*:\\s*\\\"((?:\\\\.|[^\\\"])*)\\\"");
+        try (Stream<String> responseLines = response.body()) {
+            responseLines.forEach(line -> appendStreamDelta(line, contentPattern, message, onDelta));
+        }
+        if (message.isEmpty()) {
             throw new IllegalStateException("AI 响应中没有找到提交信息。");
         }
-        return unescape(m.group(1)).trim();
+        return message.toString().trim();
+    }
+
+    /**
+     * 解析一行 SSE 数据并把文本增量追加到完整消息及界面回调。
+     *
+     * @param line           SSE 响应行
+     * @param contentPattern 提取增量 content 字段的正则表达式
+     * @param message        接收完整消息的缓冲区
+     * @param onDelta        接收单次文本增量的回调
+     */
+    private static void appendStreamDelta(String line,
+                                          Pattern contentPattern,
+                                          StringBuilder message,
+                                          Consumer<String> onDelta) {
+        if (!line.startsWith("data:")) {
+            return;
+        }
+        String eventData = line.substring("data:".length()).trim();
+        if (eventData.isEmpty() || "[DONE]".equals(eventData)) {
+            return;
+        }
+        Matcher matcher = contentPattern.matcher(eventData);
+        if (matcher.find()) {
+            String delta = unescape(matcher.group(1));
+            if (!delta.isEmpty()) {
+                message.append(delta);
+                onDelta.accept(delta);
+            }
+        }
     }
 
     private static String json(String value) {

@@ -266,7 +266,8 @@ public final class CommitMessageConfigurable implements Configurable {
         long startNanos = System.nanoTime();
         try {
             String body = "{\"model\":\"" + json(configuredModel)
-                    + "\",\"messages\":[{\"role\":\"user\",\"content\":\"仅回复 OK\"}],\"temperature\":0}";
+                    + "\",\"messages\":[{\"role\":\"user\",\"content\":\"仅回复 OK\"}],"
+                    + "\"temperature\":0,\"thinking\":{\"type\":\"disabled\"},\"stream\":false}";
             HttpRequest request = HttpRequest.newBuilder(URI.create(configuredEndpoint))
                     .timeout(Duration.ofSeconds(30))
                     .header("Authorization", "Bearer " + configuredApiKey)
