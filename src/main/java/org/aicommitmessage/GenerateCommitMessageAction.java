@@ -133,7 +133,13 @@ public final class GenerateCommitMessageAction extends AnAction {
                     });
                 } catch (Exception ex) {
                     if (!generationControl.isCancelled()) {
-                        SwingUtilities.invokeLater(() -> showNotification(project, "生成提交信息失败", ex.getMessage(), NotificationType.ERROR));
+                        // 部分网络异常没有 message，需生成非空文本以满足 IntelliJ 通知 API 的参数约束。
+                        SwingUtilities.invokeLater(() -> showNotification(
+                                project,
+                                "生成提交信息失败",
+                                describeException(ex),
+                                NotificationType.ERROR
+                        ));
                     }
                 } finally {
                     RUNNING_GENERATIONS.remove(project, generationControl);
@@ -444,7 +450,42 @@ public final class GenerateCommitMessageAction extends AnAction {
         return value.replace("\\n", "\n").replace("\\r", "\r").replace("\\\"", "\"").replace("\\\\", "\\");
     }
 
+    /**
+     * 将异常转换为适合通知展示的非空错误信息。
+     *
+     * @param exception 请求处理过程中捕获的异常
+     * @return 非空且可读的错误信息
+     */
+    private static String describeException(Throwable exception) {
+        Throwable cause = exception;
+        boolean connectionFailure = cause instanceof java.net.ConnectException;
+        while (cause.getCause() != null && cause.getCause() != cause) {
+            cause = cause.getCause();
+            connectionFailure = connectionFailure || cause instanceof java.net.ConnectException;
+        }
+        String message = cause.getMessage();
+        if (message != null && !message.isBlank()) {
+            return message;
+        }
+        if (connectionFailure) {
+            return "无法连接到 AI 服务，请检查接口地址、网络、代理和防火墙。";
+        }
+        return cause.getClass().getName();
+    }
+
+    /**
+     * 创建并发送内容非空的 IntelliJ 通知。
+     *
+     * @param project 通知所属项目
+     * @param title   通知标题
+     * @param content 通知内容
+     * @param type    通知类型
+     */
     private static void showNotification(Project project, String title, String content, NotificationType type) {
-        NotificationGroupManager.getInstance().getNotificationGroup("AI Commit Message").createNotification(title, content, type).notify(project);
+        String safeContent = content == null || content.isBlank() ? "未知错误" : content;
+        NotificationGroupManager.getInstance()
+                .getNotificationGroup("AI Commit Message")
+                .createNotification(title, safeContent, type)
+                .notify(project);
     }
 }
