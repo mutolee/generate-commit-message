@@ -30,9 +30,6 @@ repositories {
 
 // 项目依赖声明，作用类似 Maven 的 <dependencies>。
 dependencies {
-    // 使用 Jackson 序列化 LLM 请求对象，避免手工拼接 JSON 时遗漏控制字符转义。
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.18.4")
-
     intellijPlatform {
         // 使用 IntelliJ IDEA Community Edition 2024.3 作为插件的编译和测试平台。
         // 它相当于插件开发使用的 SDK，不会作为普通业务依赖打进插件包。

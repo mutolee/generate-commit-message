@@ -1,6 +1,5 @@
 package org.aicommitmessage;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -45,7 +44,6 @@ import java.util.stream.Stream;
  */
 public final class GenerateCommitMessageAction extends AnAction {
     private static final long MAX_UNVERSIONED_FILE_BYTES = 1024 * 1024;
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final Icon GENERATE_ICON = IconLoader.getIcon("/icons/commitMessage.svg", GenerateCommitMessageAction.class);
     private static final Icon STOP_ICON = IconLoader.getIcon("/icons/stopGeneration.svg", GenerateCommitMessageAction.class);
     private static final ConcurrentMap<Project, GenerationControl> RUNNING_GENERATIONS = new ConcurrentHashMap<>();
@@ -393,7 +391,7 @@ public final class GenerateCommitMessageAction extends AnAction {
                 0.2,
                 true
         );
-        String body = OBJECT_MAPPER.writeValueAsString(requestBody);
+        String body = requestBody.toJson();
         HttpRequest req = HttpRequest.newBuilder(URI.create(settings.endpoint)).timeout(Duration.ofSeconds(60)).header("Authorization", "Bearer " + settings.apiKey).header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8)).build();
         HttpResponse<Stream<String>> response = HttpClient.newHttpClient().send(req, HttpResponse.BodyHandlers.ofLines());
         if (response.statusCode() / 100 != 2) {

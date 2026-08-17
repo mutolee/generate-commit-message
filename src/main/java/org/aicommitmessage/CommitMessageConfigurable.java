@@ -1,6 +1,5 @@
 package org.aicommitmessage;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
@@ -28,7 +27,6 @@ import java.util.Objects;
  * @author 杨林恩
  */
 public final class CommitMessageConfigurable implements Configurable {
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private JPanel panel;
     private JBTextField endpoint;
     private JBTextField model;
@@ -151,7 +149,7 @@ public final class CommitMessageConfigurable implements Configurable {
         content.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
         content.add(createPageHeader());
         content.add(Box.createVerticalStrut(JBUI.scale(22)));
-        content.add(createServiceSectionTitle());
+        content.add(createSectionTitle("AI 服务"));
         content.add(Box.createVerticalStrut(JBUI.scale(8)));
         content.add(serviceForm);
         content.add(Box.createVerticalStrut(JBUI.scale(20)));
@@ -187,7 +185,7 @@ public final class CommitMessageConfigurable implements Configurable {
         title.setAlignmentX(Component.LEFT_ALIGNMENT);
         header.add(title);
         header.add(Box.createVerticalStrut(JBUI.scale(5)));
-        header.add(createHint("连接兼容 OpenAI 的服务，根据代码变更生成清晰、规范的提交信息。"));
+        header.add(createHint("连接兼容 OpenAI Chat Completions API 的服务，根据代码变更生成清晰、规范的提交信息。"));
         return header;
     }
 
@@ -250,29 +248,6 @@ public final class CommitMessageConfigurable implements Configurable {
     }
 
     /**
-     * 创建 AI 服务分区标题，并提示当前版本支持的接口类型。
-     *
-     * @return 带兼容性提示的 AI 服务分区标题组件
-     */
-    private static JComponent createServiceSectionTitle() {
-        JPanel titleRow = new JPanel();
-        titleRow.setLayout(new BoxLayout(titleRow, BoxLayout.X_AXIS));
-        titleRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        // 创建醒目的分区标题，保持与其他分区标题一致的视觉层级。
-        titleRow.add(createSectionTitle("AI 服务"));
-        titleRow.add(Box.createHorizontalStrut(JBUI.scale(8)));
-
-        // 使用较小的红色字体说明当前版本的服务兼容范围。
-        JBLabel compatibilityHint = new JBLabel("当前版本仅支持兼容 OpenAI Chat Completions API 的代理商");
-        compatibilityHint.setFont(compatibilityHint.getFont().deriveFont(
-                Math.max(compatibilityHint.getFont().getSize2D() - JBUI.scale(1), JBUI.scale(9))));
-        compatibilityHint.setForeground(FAILURE_COLOR);
-        titleRow.add(compatibilityHint);
-        return titleRow;
-    }
-
-    /**
      * 使用页面中尚未保存的接口地址、模型和密钥发送最小请求以检测服务连接。
      */
     private void testConnection() {
@@ -298,7 +273,7 @@ public final class CommitMessageConfigurable implements Configurable {
                     0,
                     false
             );
-            String body = OBJECT_MAPPER.writeValueAsString(requestBody);
+            String body = requestBody.toJson();
             HttpRequest request = HttpRequest.newBuilder(URI.create(configuredEndpoint))
                     .timeout(Duration.ofSeconds(30))
                     .header("Authorization", "Bearer " + configuredApiKey)
