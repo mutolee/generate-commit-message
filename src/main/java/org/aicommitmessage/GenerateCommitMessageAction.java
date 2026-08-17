@@ -1,5 +1,6 @@
 package org.aicommitmessage;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -44,6 +45,7 @@ import java.util.stream.Stream;
  */
 public final class GenerateCommitMessageAction extends AnAction {
     private static final long MAX_UNVERSIONED_FILE_BYTES = 1024 * 1024;
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final Icon GENERATE_ICON = IconLoader.getIcon("/icons/commitMessage.svg", GenerateCommitMessageAction.class);
     private static final Icon STOP_ICON = IconLoader.getIcon("/icons/stopGeneration.svg", GenerateCommitMessageAction.class);
     private static final ConcurrentMap<Project, GenerationControl> RUNNING_GENERATIONS = new ConcurrentHashMap<>();
@@ -384,10 +386,15 @@ public final class GenerateCommitMessageAction extends AnAction {
             // 用户省略差异变量时仍自动附加差异，避免向模型发送缺少上下文的请求。
             prompt += "\n\n代码差异：\n" + diff;
         }
-        String body = "{\"model\":\"" + json(settings.model)
-                + "\",\"messages\":[{\"role\":\"user\",\"content\":\"" + json(prompt)
-                + "\"}],\"temperature\":0.2,\"thinking\":{\"type\":\"disabled\"},\"stream\":true}";
-        HttpRequest req = HttpRequest.newBuilder(URI.create(settings.endpoint)).timeout(Duration.ofSeconds(60)).header("Authorization", "Bearer " + settings.apiKey).header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(body)).build();
+        // 通过 JSON 序列化器生成请求体，确保 Diff 中的 Tab 和控制字符得到合法转义。
+        ChatCompletionRequest requestBody = ChatCompletionRequest.userMessage(
+                settings.model,
+                prompt,
+                0.2,
+                true
+        );
+        String body = OBJECT_MAPPER.writeValueAsString(requestBody);
+        HttpRequest req = HttpRequest.newBuilder(URI.create(settings.endpoint)).timeout(Duration.ofSeconds(60)).header("Authorization", "Bearer " + settings.apiKey).header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8)).build();
         HttpResponse<Stream<String>> response = HttpClient.newHttpClient().send(req, HttpResponse.BodyHandlers.ofLines());
         if (response.statusCode() / 100 != 2) {
             try (Stream<String> responseLines = response.body()) {
@@ -433,10 +440,6 @@ public final class GenerateCommitMessageAction extends AnAction {
                 onDelta.accept(delta);
             }
         }
-    }
-
-    private static String json(String value) {
-        return value.replace("\\", "\\\\").replace("\"", "\\\"").replace("\r", "\\r").replace("\n", "\\n");
     }
 
     private static String unescape(String value) {

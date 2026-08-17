@@ -1,5 +1,6 @@
 package org.aicommitmessage;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
@@ -17,6 +18,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Objects;
 
@@ -26,6 +28,7 @@ import java.util.Objects;
  * @author 杨林恩
  */
 public final class CommitMessageConfigurable implements Configurable {
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private JPanel panel;
     private JBTextField endpoint;
     private JBTextField model;
@@ -148,7 +151,7 @@ public final class CommitMessageConfigurable implements Configurable {
         content.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
         content.add(createPageHeader());
         content.add(Box.createVerticalStrut(JBUI.scale(22)));
-        content.add(createSectionTitle("AI 服务"));
+        content.add(createServiceSectionTitle());
         content.add(Box.createVerticalStrut(JBUI.scale(8)));
         content.add(serviceForm);
         content.add(Box.createVerticalStrut(JBUI.scale(20)));
@@ -247,6 +250,29 @@ public final class CommitMessageConfigurable implements Configurable {
     }
 
     /**
+     * 创建 AI 服务分区标题，并提示当前版本支持的接口类型。
+     *
+     * @return 带兼容性提示的 AI 服务分区标题组件
+     */
+    private static JComponent createServiceSectionTitle() {
+        JPanel titleRow = new JPanel();
+        titleRow.setLayout(new BoxLayout(titleRow, BoxLayout.X_AXIS));
+        titleRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // 创建醒目的分区标题，保持与其他分区标题一致的视觉层级。
+        titleRow.add(createSectionTitle("AI 服务"));
+        titleRow.add(Box.createHorizontalStrut(JBUI.scale(8)));
+
+        // 使用较小的红色字体说明当前版本的服务兼容范围。
+        JBLabel compatibilityHint = new JBLabel("当前版本仅支持兼容 OpenAI Chat Completions API 的代理商");
+        compatibilityHint.setFont(compatibilityHint.getFont().deriveFont(
+                Math.max(compatibilityHint.getFont().getSize2D() - JBUI.scale(1), JBUI.scale(9))));
+        compatibilityHint.setForeground(FAILURE_COLOR);
+        titleRow.add(compatibilityHint);
+        return titleRow;
+    }
+
+    /**
      * 使用页面中尚未保存的接口地址、模型和密钥发送最小请求以检测服务连接。
      */
     private void testConnection() {
@@ -265,14 +291,19 @@ public final class CommitMessageConfigurable implements Configurable {
         connectionFailureContainer.setVisible(false);
         long startNanos = System.nanoTime();
         try {
-            String body = "{\"model\":\"" + json(configuredModel)
-                    + "\",\"messages\":[{\"role\":\"user\",\"content\":\"仅回复 OK\"}],"
-                    + "\"temperature\":0,\"thinking\":{\"type\":\"disabled\"},\"stream\":false}";
+            // 连接检测同样使用对象序列化，保证请求结构与正式生成请求保持一致。
+            ChatCompletionRequest requestBody = ChatCompletionRequest.userMessage(
+                    configuredModel,
+                    "仅回复 OK",
+                    0,
+                    false
+            );
+            String body = OBJECT_MAPPER.writeValueAsString(requestBody);
             HttpRequest request = HttpRequest.newBuilder(URI.create(configuredEndpoint))
                     .timeout(Duration.ofSeconds(30))
                     .header("Authorization", "Bearer " + configuredApiKey)
                     .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(body))
+                    .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
                     .build();
             // 异步检测连接，避免网络请求阻塞 IntelliJ 设置窗口。
             HttpClient.newHttpClient().sendAsync(request, HttpResponse.BodyHandlers.ofString())
@@ -319,19 +350,6 @@ public final class CommitMessageConfigurable implements Configurable {
         connectionFailureDetail.setCaretPosition(0);
         connectionFailureContainer.setVisible(true);
         serviceForm.revalidate();
-    }
-
-    /**
-     * 将字符串转义为 JSON 字符串内容。
-     *
-     * @param value 原始字符串
-     * @return 完成 JSON 转义的字符串
-     */
-    private static String json(String value) {
-        return value.replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\r", "\\r")
-                .replace("\n", "\\n");
     }
 
     /**
