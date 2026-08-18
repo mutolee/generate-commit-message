@@ -29,8 +29,7 @@ public final class CommitMessageSettings implements PersistentStateComponent<Com
             代码差异：
             {{diff}}""";
 
-    /** 默认提示词模板，使用语言和 Git 差异变量生成 Conventional Commit 信息。 */
-    public static final String DEFAULT_PROMPT_TEMPLATE = """
+    private static final String PREVIOUS_DEFAULT_PROMPT_TEMPLATE = """
             请根据下面的代码差异生成 Git 提交信息，并严格使用以下格式：
 
             type(scope): 简洁的提交摘要
@@ -45,6 +44,48 @@ public final class CommitMessageSettings implements PersistentStateComponent<Com
             3. 根据实际差异生成 2 至 6 条变更说明，不要编造代码中不存在的内容。
             4. 不要使用代码块、标题、引号或额外解释。
             5. 只返回提交信息，语言为：{{language}}。
+
+            代码差异：
+            {{diff}}""";
+
+    private static final String TITLE_EMOJI_ONLY_PROMPT_TEMPLATE = """
+            请根据下面的代码差异生成 Git 提交信息，并严格使用以下格式：
+
+            type(scope): ✨ 简洁的提交摘要
+
+            - 具体变更一
+            - 具体变更二
+            - 具体变更三
+
+            要求：
+            1. 第一行遵循 Conventional Commits，冒号后依次为一个 emoji 和 description。
+            2. emoji 必须与 type 和变更内容匹配，例如 feat 使用 ✨、fix 使用 🐛、docs 使用 📝、refactor 使用 ♻️、test 使用 ✅、chore 使用 🔧、style 使用 🎨、perf 使用 ⚡、ci 使用 👷、build 使用 📦、revert 使用 ⏪。
+            3. 第一行后空一行，再使用“- ”开头逐条列出主要变更。
+            4. 根据实际差异生成 2 至 6 条变更说明，不要编造代码中不存在的内容。
+            5. 不要使用代码块、标题、引号或额外解释。
+            6. 只返回提交信息，语言为：{{language}}。
+
+            代码差异：
+            {{diff}}""";
+
+    /** 默认提示词模板，使用语言和 Git 差异变量生成 Conventional Commit 信息。 */
+    public static final String DEFAULT_PROMPT_TEMPLATE = """
+            请根据下面的代码差异生成 Git 提交信息，并严格使用以下格式：
+
+            type(scope): ✨ 简洁的提交摘要
+
+            - 📦 具体变更一
+            - 🔧 具体变更二
+            - 📝 具体变更三
+
+            要求：
+            1. 第一行遵循 Conventional Commits，冒号后依次为一个 emoji 和 description。
+            2. emoji 必须与 type 和变更内容匹配，例如 feat 使用 ✨、fix 使用 🐛、docs 使用 📝、refactor 使用 ♻️、test 使用 ✅、chore 使用 🔧、style 使用 🎨、perf 使用 ⚡、ci 使用 👷、build 使用 📦、revert 使用 ⏪。
+            3. 第一行必须保留 type(scope)，不得用 emoji 替代 type 或 scope。
+            4. 第一行后空一行，再使用“- emoji ”开头逐条列出主要变更；每个列表项都必须包含一个与该项内容匹配的 emoji。
+            5. 根据实际差异生成 2 至 6 条变更说明，不要编造代码中不存在的内容。
+            6. 不要使用代码块、标题、引号或额外解释。
+            7. 只返回提交信息，语言为：{{language}}。
 
             代码差异：
             {{diff}}""";
@@ -69,7 +110,9 @@ public final class CommitMessageSettings implements PersistentStateComponent<Com
         public String getPromptTemplate() {
             if (promptTemplate == null || promptTemplate.isBlank()
                     || LEGACY_ENGLISH_PROMPT_TEMPLATE.equals(promptTemplate)
-                    || LEGACY_CHINESE_PROMPT_TEMPLATE.equals(promptTemplate)) {
+                    || LEGACY_CHINESE_PROMPT_TEMPLATE.equals(promptTemplate)
+                    || PREVIOUS_DEFAULT_PROMPT_TEMPLATE.equals(promptTemplate)
+                    || TITLE_EMOJI_ONLY_PROMPT_TEMPLATE.equals(promptTemplate)) {
                 return DEFAULT_PROMPT_TEMPLATE;
             }
             return promptTemplate;

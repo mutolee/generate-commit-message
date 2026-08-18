@@ -10,6 +10,7 @@
 - 非 Commit 窗口场景下自动回退到 Git 暂存区差异
 - 生成结果直接写入 Commit Message 输入框
 - 支持 Conventional Commits 标题和多条变更说明
+- 为提交标题和每个变更列表项自动添加对应的 emoji 表情
 - 支持中文、英文和日文提交信息
 - 支持自定义提示词模板
 - 支持 OpenAI 及兼容 Chat Completions API 的第三方服务
@@ -22,12 +23,12 @@
 默认提示词会生成类似下面的提交信息：
 
 ```text
-chore(build): 更新插件构建配置并优化注释
+chore(build): 🔧 更新插件构建配置并优化注释
 
-- 升级 IntelliJ Platform Gradle Plugin 版本
-- 移除不再需要的构建依赖声明
-- 优化任务配置和兼容性说明
-- 调整 Java 源码中的注释格式
+- 📦 升级 IntelliJ Platform Gradle Plugin 版本
+- 🗑️ 移除不再需要的构建依赖声明
+- 🔧 优化任务配置和兼容性说明
+- 📝 调整 Java 源码中的注释格式
 ```
 
 ## 环境要求
@@ -100,11 +101,11 @@ chore(build): 更新插件构建配置并优化注释
 默认模板要求模型输出：
 
 ```text
-type(scope): 简洁的提交摘要
+type(scope): ✨ 简洁的提交摘要
 
-- 具体变更一
-- 具体变更二
-- 具体变更三
+- 📦 具体变更一
+- 🔧 具体变更二
+- 📝 具体变更三
 ```
 
 如果自定义模板中没有填写 `{{diff}}`，插件会自动把 Git Diff 追加到提示词末尾，避免模型缺少代码变更上下文。
