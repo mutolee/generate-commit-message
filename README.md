@@ -1,4 +1,4 @@
-# CommitMuse: AI Commit Message
+# AI Commit Message Generator for IntelliJ
 
 一款面向 IntelliJ IDEA 的 AI Git 提交信息生成插件。它可以读取 Commit 工具窗口中勾选的代码变更，调用兼容 OpenAI Chat Completions API 的模型，生成符合 Conventional Commits 规范的提交信息，并直接写入 Commit Message 输入框。
 

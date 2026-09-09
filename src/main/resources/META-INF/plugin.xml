@@ -3,7 +3,7 @@
     <id>org.aicommitmessage</id>
 
     <!-- IDEA 插件管理器中显示的插件名称。 -->
-    <name>CommitMuse: AI Commit Message</name>
+    <name>AI Commit Message Generator for IntelliJ</name>
 
     <!-- 插件供应商信息，email 用于在插件详情中提供联系地址。 -->
     <vendor email="mutolee@qq.com">Mutolee</vendor>
