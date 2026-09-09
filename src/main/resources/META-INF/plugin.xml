@@ -3,16 +3,16 @@
     <id>org.aicommitmessage</id>
 
     <!-- IDEA 插件管理器中显示的插件名称。 -->
-    <name>AI Commit Message</name>
+    <name>CommitMuse: AI Commit Message</name>
 
     <!-- 插件供应商信息，email 用于在插件详情中提供联系地址。 -->
-    <vendor email="mutolee@qq.com">AI Commit Message</vendor>
+    <vendor email="mutolee@qq.com">Mutolee</vendor>
 
     <!-- 插件简介，会显示在插件详情页；英文置于开头以符合 JetBrains Marketplace 的商品页要求。 -->
     <description><![CDATA[
         <p>Generate Conventional Commit messages from the changes selected in IntelliJ IDEA's Commit tool window.</p>
 
-        <p>AI Commit Message turns the diff you are about to commit into a clear, editable commit message and writes it directly into the Commit Message field.</p>
+        <p>CommitMuse turns the diff you are about to commit into a clear, editable commit message and writes it directly into the Commit Message field.</p>
 
         <h2>Highlights</h2>
         <ul>
