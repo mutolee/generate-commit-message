@@ -50,8 +50,17 @@ intellijPlatform {
             sinceBuild = "243"
         }
 
-        // 插件版本更新说明，会写入最终生成的插件元数据。
-        changeNotes = "支持根据已暂存的 Git 变更生成提交信息，并可自定义提示词模板。"
+        // 插件版本更新说明，会显示在 Marketplace 和 IDE 插件管理器的 What's New 区域。
+        changeNotes = """
+            <h2>1.0.0</h2>
+            <ul>
+                <li>Generate commit messages from changes selected in the Commit tool window, including untracked files.</li>
+                <li>Stream generated text directly into the Commit Message field and allow in-progress generation to be cancelled.</li>
+                <li>Create Conventional Commits messages with configurable language, prompt template, and emoji formatting.</li>
+                <li>Configure and test a Chat Completions-compatible endpoint from the IDE settings.</li>
+                <li>Fall back to the staged Git diff and clipboard when invoked outside the Commit tool window.</li>
+            </ul>
+        """.trimIndent()
     }
 }
 
