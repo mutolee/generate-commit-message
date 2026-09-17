@@ -1,9 +1,12 @@
-# AI Commit Message Generator for IntelliJ
+# AI Commit for IntelliJ
 
-一款面向 IntelliJ IDEA 的 AI Git 提交信息生成插件。它可以读取 Commit 工具窗口中勾选的代码变更，调用兼容 OpenAI Chat Completions API 的模型，生成符合 Conventional Commits 规范的提交信息，并直接写入 Commit Message 输入框。
+An AI commit message generator for Git in IntelliJ IDEA. Turn selected Git diffs into Conventional Commits with customizable prompts and a Chat Completions-compatible API.
+
+一款面向 IntelliJ IDEA 的 AI Git 提交信息生成器与代码提交助手。它可以读取 Commit 工具窗口中勾选的代码变更，调用兼容 OpenAI Chat Completions API 的模型，自动生成符合 Conventional Commits 规范的提交信息，并直接写入 Commit Message 输入框。
 
 ## 功能特性
 
+- **安装包仅约 34 KB**：1.0.1 版本 ZIP 实测为 33,606 字节（约 32.8 KiB），不同版本大小可能略有变化。
 - 在 IntelliJ IDEA 的 Commit 工具栏中一键生成提交信息
 - 优先读取 Commit 工具窗口中实际勾选的文件
 - 支持已跟踪文件和未跟踪文件

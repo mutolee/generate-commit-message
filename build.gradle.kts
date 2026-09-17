@@ -15,7 +15,7 @@ group = "org.aicommitmessage"
 
 // 对应 Maven 的 <version>，同时会成为生成插件包的版本号。
 // 发布新版本时应按照项目的版本策略递增此值。
-version = "1.0.1"
+version = "1.0.2"
 
 // 项目依赖的下载仓库，作用类似 Maven 的 <repositories>。
 repositories {
@@ -52,6 +52,12 @@ intellijPlatform {
 
         // 插件版本更新说明，会显示在 Marketplace 和 IDE 插件管理器的 What's New 区域。
         changeNotes = """
+            <h2>1.0.2</h2>
+            <ul>
+                <li>Update the display name to AI Commit for IntelliJ.</li>
+                <li>Clarify the English and Chinese descriptions of AI commit message generation, Git diffs, and Conventional Commits.</li>
+                <li>Update the README introduction and remove the outdated name from the plugin description.</li>
+            </ul>
             <h2>1.0.1</h2>
             <ul>
                 <li>Rename the Marketplace display name to avoid conflicts with an existing plugin.</li>

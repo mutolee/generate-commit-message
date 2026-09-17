@@ -3,22 +3,23 @@
     <id>org.aicommitmessage</id>
 
     <!-- IDEA 插件管理器中显示的插件名称。 -->
-    <name>AI Commit Message Generator for IntelliJ</name>
+    <name>AI Commit for IntelliJ</name>
 
     <!-- 插件供应商信息，email 用于在插件详情中提供联系地址。 -->
     <vendor email="mutolee@qq.com">Mutolee</vendor>
 
     <!-- 插件简介，会显示在插件详情页；英文置于开头以符合 JetBrains Marketplace 的商品页要求。 -->
     <description><![CDATA[
-        <p>Generate Conventional Commit messages from the changes selected in IntelliJ IDEA's Commit tool window.</p>
+        <p>An AI commit message generator for Git in IntelliJ IDEA. Generate Conventional Commits from your selected code changes and write the result directly into the Commit Message field.</p>
 
-        <p>CommitMuse turns the diff you are about to commit into a clear, editable commit message and writes it directly into the Commit Message field.</p>
+        <p>Use this AI commit assistant to summarize a Git diff, draft a commit title and change list, and review the message before committing. Customize the prompt and connect your own Chat Completions-compatible API endpoint and model.</p>
 
         <h2>Highlights</h2>
         <ul>
+            <li><b>Only about 34 KB to download:</b> the version 1.0.1 ZIP is 33,606 bytes. Package size may vary by version.</li>
             <li><b>Uses the changes you selected:</b> reads tracked and untracked files checked in the Commit tool window.</li>
             <li><b>Writes as it generates:</b> streams the response into the Commit Message field so you can review it immediately.</li>
-            <li><b>Produces structured messages:</b> the default prompt creates a Conventional Commits title plus a concise change list with matching emoji.</li>
+            <li><b>Generates Conventional Commits:</b> the default prompt creates a structured commit title plus a concise change list with matching emoji.</li>
             <li><b>Works in multiple languages:</b> generate commit messages in Chinese, English, or Japanese.</li>
             <li><b>Lets you stay in control:</b> customize the prompt template, test the connection, and stop an in-progress generation from the toolbar.</li>
             <li><b>Supports your own provider:</b> configure a Chat Completions-compatible endpoint, model, and API key.</li>
@@ -44,8 +45,9 @@
         </ul>
 
         <h2>中文说明</h2>
-        <p>根据 IntelliJ IDEA 提交窗口中勾选的代码变更生成 Conventional Commits 提交信息，并以流式方式直接写入提交信息输入框。</p>
+        <p>面向 IntelliJ IDEA 的 AI Git 提交信息生成器，可作为日常代码提交助手，根据勾选的 Git Diff 自动生成提交信息（Commit Message）。支持 Conventional Commits 规范，以流式方式直接写入提交窗口，方便检查和修改后再提交代码。</p>
         <ul>
+            <li><b>安装包仅约 34 KB：</b>1.0.1 版本 ZIP 实测为 33,606 字节，下载体积小；不同版本的安装包大小可能略有变化。</li>
             <li>支持已跟踪文件、未跟踪文件，以及非提交窗口场景下的 Git 暂存区差异。</li>
             <li>支持中文、英文、日文，可自定义提示词模板。</li>
             <li>支持兼容 Chat Completions API 的自定义服务地址和模型。</li>
