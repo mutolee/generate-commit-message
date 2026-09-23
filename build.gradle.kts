@@ -54,7 +54,7 @@ intellijPlatform {
         changeNotes = """
             <h2>1.0.2</h2>
             <ul>
-                <li>Update the display name to AI Commit for IntelliJ.</li>
+                <li>Rename the plugin to AI Commit Message - Generator, removing the IDE product name as requested by Marketplace review.</li>
                 <li>Clarify the English and Chinese descriptions of AI commit message generation, Git diffs, and Conventional Commits.</li>
                 <li>Update the README introduction and remove the outdated name from the plugin description.</li>
             </ul>

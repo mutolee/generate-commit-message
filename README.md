@@ -1,4 +1,4 @@
-# AI Commit for IntelliJ
+# AI Commit Message - Generator
 
 An AI commit message generator for Git in IntelliJ IDEA. Turn selected Git diffs into Conventional Commits with customizable prompts and a Chat Completions-compatible API.
 
