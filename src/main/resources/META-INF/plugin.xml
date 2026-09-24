@@ -67,6 +67,10 @@
         <!-- 通知组：用于显示提交信息生成成功或失败的气泡通知。 -->
         <notificationGroup id="AI Commit Message" displayType="BALLOON"/>
 
+        <!-- 默认在右下角状态栏显示插件图标，提供设置页快捷入口。 -->
+        <statusBarWidgetFactory id="AICommitMessage.StatusBar"
+                                implementation="org.aicommitmessage.CommitMessageStatusBarWidgetFactory"/>
+
         <!--
             应用级设置页面：instance 指向 Configurable 实现类，
             parentId="tools" 表示页面显示在 Settings | Tools 下。

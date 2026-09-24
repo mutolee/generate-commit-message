@@ -20,6 +20,7 @@ An AI commit message generator for Git in IntelliJ IDEA. Turn selected Git diffs
 - 支持在设置页面检测接口地址、模型和 API 密钥
 - 生成过程中 Action 会切换为红色停止图标，再次点击可取消任务
 - 自动适配 IntelliJ Light/Dark 主题图标
+- 右下角状态栏显示 `M` 图标，点击后选择 `Setting` 可直达插件配置页
 
 ## 生成效果
 
@@ -62,6 +63,9 @@ chore(build): 🔧 更新插件构建配置并优化注释
 ```text
 设置 | 工具 | AI Commit Message
 ```
+
+也可以点击 IDEA 右下角状态栏的 `M` 图标，选择 `Setting`，直接打开上述配置页。
+该入口默认显示；如果曾手动隐藏，可右键状态栏并启用 `AI Commit Message`。
 
 填写以下配置：
 
