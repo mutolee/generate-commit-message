@@ -3,7 +3,7 @@
     <id>org.aicommitmessage</id>
 
     <!-- IDEA 插件管理器中显示的插件名称。 -->
-    <name>AI Commit Message - Generator</name>
+    <name>AI Commit Message - Free</name>
 
     <!-- 插件供应商信息，email 用于在插件详情中提供联系地址。 -->
     <vendor email="mutolee@qq.com">Mutolee</vendor>
@@ -11,6 +11,8 @@
     <!-- 插件简介，会显示在插件详情页；英文置于开头以符合 JetBrains Marketplace 的商品页要求。 -->
     <description><![CDATA[
         <p>An AI commit message generator for Git in IntelliJ IDEA. Generate Conventional Commits from your selected code changes and write the result directly into the Commit Message field.</p>
+
+        <p><b>Free LLM access for everyday commit messages:</b> get started with the <a href="https://www.sensenova.cn/token-plan">SenseNova Token Plan</a>, free during public beta. Its <a href="https://www.sensenova.ai/token-plan">international page</a> lists <b>1,500 requests per model every 5 hours</b> (special models excluded), a generous allowance for daily Commit Message generation. The Chinese page currently lists 60,000 credits every 5 hours; actual quotas depend on the model and current plan terms.</p>
 
         <p>Use this AI commit assistant to summarize a Git diff, draft a commit title and change list, and review the message before committing. Customize the prompt and connect your own Chat Completions-compatible API endpoint and model.</p>
 
@@ -45,6 +47,7 @@
         </ul>
 
         <h2>中文说明</h2>
+        <p><b>免费白嫖 LLM，满足日常 Commit Message 生成需要：</b>前往<a href="https://www.sensenova.cn/token-plan">商汤日日新 SenseNova Token Plan</a>，即可了解公测期免费方案。<a href="https://www.sensenova.ai/token-plan">官网国际站</a>标注<b>每模型每 5 小时 1500 次免费 LLM 请求</b>（特殊模型除外），日常生成提交信息额度充裕。中文站目前按每 5 小时 60,000 积分展示，实际额度以所选模型及官网最新规则为准。</p>
         <p>面向 IntelliJ IDEA 的 AI Git 提交信息生成器，可作为日常代码提交助手，根据勾选的 Git Diff 自动生成提交信息（Commit Message）。支持 Conventional Commits 规范，以流式方式直接写入提交窗口，方便检查和修改后再提交代码。</p>
         <ul>
             <li><b>安装包仅约 34 KB：</b>1.0.1 版本 ZIP 实测为 33,606 字节，下载体积小；不同版本的安装包大小可能略有变化。</li>

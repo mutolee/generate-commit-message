@@ -15,7 +15,7 @@ group = "org.aicommitmessage"
 
 // 对应 Maven 的 <version>，同时会成为生成插件包的版本号。
 // 发布新版本时应按照项目的版本策略递增此值。
-version = "1.0.3"
+version = "1.0.4"
 
 // 项目依赖的下载仓库，作用类似 Maven 的 <repositories>。
 repositories {
@@ -52,6 +52,12 @@ intellijPlatform {
 
         // 插件版本更新说明，会显示在 Marketplace 和 IDE 插件管理器的 What's New 区域。
         changeNotes = """
+            <h2>1.0.4</h2>
+            <ul>
+                <li>Rename the plugin to AI Commit Message - Free.</li>
+                <li>Adjust the status bar popup menu width to 210 pixels.</li>
+                <li>Highlight SenseNova Token Plan free access for everyday commit message generation, with current quota details.</li>
+            </ul>
             <h2>1.0.3</h2>
             <ul>
                 <li>Add a status bar icon with a Setting shortcut to the AI Commit Message configuration page.</li>

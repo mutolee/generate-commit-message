@@ -101,7 +101,7 @@ final class CommitMessageStatusBarWidget implements StatusBarWidget, StatusBarWi
                 "AI Commit Message", actions, DataManager.getInstance().getDataContext(component),
                 JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true); // 使用平台原生菜单和键盘导航。
         Disposer.register(this, popup); // 插件卸载或项目关闭时自动释放弹出菜单。
-        popup.setMinimumSize(JBUI.size(240, 0)); // 加宽菜单并适配 IDE 缩放，高度仍由菜单内容决定。
+        popup.setMinimumSize(JBUI.size(210, 0)); // 菜单宽度设为 210 像素并适配 IDE 缩放，高度仍由菜单内容决定。
         int height = popup.getContent().getPreferredSize().height; // 计算高度，让菜单在状态栏上方展开。
         popup.show(new RelativePoint(component, new Point(0, -height))); // 在当前窗口显示菜单。
     }

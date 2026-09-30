@@ -1,8 +1,14 @@
-# AI Commit Message - Generator
+# AI Commit Message - Free
 
 An AI commit message generator for Git in IntelliJ IDEA. Turn selected Git diffs into Conventional Commits with customizable prompts and a Chat Completions-compatible API.
 
 一款面向 IntelliJ IDEA 的 AI Git 提交信息生成器与代码提交助手。它可以读取 Commit 工具窗口中勾选的代码变更，调用兼容 OpenAI Chat Completions API 的模型，自动生成符合 Conventional Commits 规范的提交信息，并直接写入 Commit Message 输入框。
+
+## 免费 LLM 额度，满足日常 Commit Message 需要
+
+**想免费白嫖 LLM？前往 [商汤日日新 SenseNova Token Plan](https://www.sensenova.cn/token-plan)，了解公测期免费方案。** [官网国际站](https://www.sensenova.ai/token-plan)标注 **每模型每 5 小时 1500 次免费 LLM 请求**（特殊模型除外），日常生成 Commit Message 额度充裕。
+
+中文站目前按 **每 5 小时 60,000 积分**展示，实际额度以所选模型及官网最新规则为准。申请 API Key 后，在插件设置中填写该服务提供的兼容 Chat Completions 的接口地址、模型和密钥，即可用于生成提交信息。
 
 ## 功能特性
 
