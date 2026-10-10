@@ -67,7 +67,7 @@
 
     <!-- IntelliJ Platform 扩展点注册区；默认扩展点命名空间为 com.intellij。 -->
     <extensions defaultExtensionNs="com.intellij">
-        <!-- 通知组：用于显示提交信息生成成功或失败的气泡通知。 -->
+        <!-- 通知组：仅用于显示提交信息生成失败的气泡通知。 -->
         <notificationGroup id="AI Commit Message" displayType="BALLOON"/>
 
         <!-- 默认在右下角状态栏显示插件图标，提供设置页快捷入口。 -->

@@ -124,11 +124,9 @@ public final class GenerateCommitMessageAction extends AnAction {
                         if (workflowUi != null) {
                             // 直接写入当前提交窗口的提交信息编辑框，省去手动粘贴步骤。
                             workflowUi.getCommitMessageUi().setText(message);
-                            showNotification(project, "提交信息已写入提交框", message, NotificationType.INFORMATION);
                         } else {
                             // 非提交窗口上下文没有可写入的编辑框，保留复制到剪贴板的回退行为。
                             CopyPasteManager.getInstance().setContents(new StringSelection(message));
-                            showNotification(project, "提交信息已复制到剪贴板", message, NotificationType.INFORMATION);
                         }
                     });
                 } catch (Exception ex) {
