@@ -20,6 +20,9 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
@@ -100,10 +103,34 @@ final class CommitMessageStatusBarWidget implements StatusBarWidget, StatusBarWi
         ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
                 "AI Commit Message", actions, DataManager.getInstance().getDataContext(component),
                 JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true); // 使用平台原生菜单和键盘导航。
+        addBanner(popup); // 在标题下方、菜单项上方展示插件主题横图。
         Disposer.register(this, popup); // 插件卸载或项目关闭时自动释放弹出菜单。
         popup.setMinimumSize(JBUI.size(210, 0)); // 菜单宽度设为 210 像素并适配 IDE 缩放，高度仍由菜单内容决定。
         int height = popup.getContent().getPreferredSize().height; // 计算高度，让菜单在状态栏上方展开。
         popup.show(new RelativePoint(component, new Point(0, -height))); // 在当前窗口显示菜单。
+    }
+
+    /** 将横图插入标题与菜单之间，保留平台原有标题、菜单焦点和键盘操作。 */
+    private static void addBanner(ListPopup popup) {
+        JComponent content = popup.getContent();
+        if (!(content.getLayout() instanceof BorderLayout layout)) {
+            return; // 平台布局改变时仍保留可用的原生菜单。
+        }
+        Component menu = layout.getLayoutComponent(BorderLayout.CENTER);
+        if (menu == null) {
+            return;
+        }
+        CommitMessageBanner banner = new CommitMessageBanner(); // 紧凑横图复用插件 M 标识。
+        JPanel bannerContainer = new JPanel(new BorderLayout());
+        bannerContainer.setOpaque(false);
+        bannerContainer.setBorder(JBUI.Borders.empty(0, 8, 8, 8)); // 左右留白，并与下方菜单保持间距。
+        bannerContainer.add(banner, BorderLayout.CENTER);
+        JPanel body = new JPanel(new BorderLayout());
+        body.setOpaque(false);
+        content.remove(menu); // 只包裹菜单区域，保留外层原生标题。
+        body.add(bannerContainer, BorderLayout.NORTH);
+        body.add(menu, BorderLayout.CENTER);
+        content.add(body, BorderLayout.CENTER);
     }
 
     /** 标记组件已释放，阻止后续点击继续打开设置。 */

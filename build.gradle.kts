@@ -15,7 +15,7 @@ group = "org.aicommitmessage"
 
 // 对应 Maven 的 <version>，同时会成为生成插件包的版本号。
 // 发布新版本时应按照项目的版本策略递增此值。
-version = "1.0.5"
+version = "1.0.6"
 
 // 项目依赖的下载仓库，作用类似 Maven 的 <repositories>。
 repositories {
@@ -52,6 +52,13 @@ intellijPlatform {
 
         // 插件版本更新说明，会显示在 Marketplace 和 IDE 插件管理器的 What's New 区域。
         changeNotes = """
+            <h2>1.0.6</h2>
+            <ul>
+                <li>Add an API Format selector with OpenAI Chat Completions as the default and support for OpenAI Responses.</li>
+                <li>Adapt connection tests, JSON responses, and streaming output to the selected format, with validation for failed, incomplete, and empty responses.</li>
+                <li>Update the settings introduction and API configuration documentation.</li>
+                <li>Add a compact status bar menu banner featuring the plugin's M icon, with side margins and spacing above the menu. The banner image is under 20 KB.</li>
+            </ul>
             <h2>1.0.5</h2>
             <ul>
                 <li>Remove success notification popups after writing generated commit messages to the commit field or clipboard to reduce interruptions.</li>
@@ -102,4 +109,24 @@ java {
 // 本插件未使用 GUI Designer 表单，禁用该任务不会影响现有 Java 代码运行。
 tasks.named("instrumentCode") {
     enabled = false
+}
+
+tasks.named("instrumentTestCode") {
+    enabled = false
+}
+
+// 协议回归测试只依赖 JDK 和平台自带的 JSON 库，无需启动 IDE 或调用真实 API。
+val protocolTests by sourceSets.creating {
+    compileClasspath += sourceSets.main.get().output + configurations.compileClasspath.get()
+    runtimeClasspath += compileClasspath
+}
+
+val protocolTest by tasks.registering(JavaExec::class) {
+    dependsOn(tasks.named(protocolTests.classesTaskName))
+    classpath = protocolTests.runtimeClasspath
+    mainClass.set("org.aicommitmessage.ApiProtocolTest")
+}
+
+tasks.check {
+    dependsOn(protocolTest)
 }

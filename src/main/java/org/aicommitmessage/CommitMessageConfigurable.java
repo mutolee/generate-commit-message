@@ -29,6 +29,7 @@ import java.util.Objects;
 public final class CommitMessageConfigurable implements Configurable {
     private JPanel panel;
     private JBTextField endpoint;
+    private JComboBox<ApiFormat> apiFormat;
     private JBTextField model;
     private JBPasswordField apiKey;
     private JComboBox<String> language;
@@ -55,6 +56,8 @@ public final class CommitMessageConfigurable implements Configurable {
 
         // 使用 IntelliJ 原生组件和表单构建器，使控件间距、字体及主题保持一致。
         endpoint = new JBTextField();
+        apiFormat = new JComboBox<>(ApiFormat.values()); // 选项直接来自协议定义，便于后续扩展。
+        apiFormat.addActionListener(event -> updateEndpointHint());
         model = new JBTextField();
         apiKey = new JBPasswordField();
         language = new JComboBox<>(new String[]{"中文", "英文", "日文"});
@@ -120,11 +123,12 @@ public final class CommitMessageConfigurable implements Configurable {
 
         serviceForm = new JPanel(new GridBagLayout());
         addFormRow(serviceForm, "接口地址：", endpoint, 0);
-        addFormRow(serviceForm, "模型：", model, 1);
-        addFormRow(serviceForm, "API 密钥：", apiKey, 2);
-        addFormRow(serviceForm, "提交信息语言：", language, 3);
-        addFormRow(serviceForm, "连接检测：", connectionTestPanel, 4);
-        addDetailRow(serviceForm, connectionFailureContainer, 5);
+        addFormRow(serviceForm, "API 格式：", apiFormat, 1);
+        addFormRow(serviceForm, "模型：", model, 2);
+        addFormRow(serviceForm, "API 密钥：", apiKey, 3);
+        addFormRow(serviceForm, "提交信息语言：", language, 4);
+        addFormRow(serviceForm, "连接检测：", connectionTestPanel, 5);
+        addDetailRow(serviceForm, connectionFailureContainer, 6);
         serviceForm.setAlignmentX(Component.LEFT_ALIGNMENT);
         serviceForm.setMinimumSize(new Dimension(0, 0));
         serviceForm.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
@@ -185,8 +189,20 @@ public final class CommitMessageConfigurable implements Configurable {
         title.setAlignmentX(Component.LEFT_ALIGNMENT);
         header.add(title);
         header.add(Box.createVerticalStrut(JBUI.scale(5)));
-        header.add(createHint("连接兼容 OpenAI Chat Completions API 的服务，根据代码变更生成清晰、规范的提交信息。"));
+        header.add(createHint("连接 AI 服务，根据代码变更生成清晰、规范的提交信息。"));
+        header.add(createHint("支持 OpenAI Chat Completions、OpenAI Responses 及兼容服务，请选择对应的 API 格式。"));
         return header;
+    }
+
+    /** 显示所选格式的地址示例，保留用户填写的完整服务 URL。 */
+    private void updateEndpointHint() {
+        ApiFormat selectedFormat = (ApiFormat) apiFormat.getSelectedItem();
+        if (selectedFormat != null) {
+            String hint = "填写完整接口地址，例如：" + selectedFormat.exampleEndpoint();
+            endpoint.getEmptyText().setText(selectedFormat.exampleEndpoint());
+            endpoint.setToolTipText(hint);
+            apiFormat.setToolTipText(hint);
+        }
     }
 
     /**
@@ -252,6 +268,7 @@ public final class CommitMessageConfigurable implements Configurable {
      */
     private void testConnection() {
         String configuredEndpoint = endpoint.getText().trim();
+        ApiFormat configuredFormat = (ApiFormat) apiFormat.getSelectedItem();
         String configuredModel = model.getText().trim();
         String configuredApiKey = new String(apiKey.getPassword()).trim();
         if (configuredEndpoint.isEmpty() || configuredModel.isEmpty() || configuredApiKey.isEmpty()) {
@@ -266,14 +283,13 @@ public final class CommitMessageConfigurable implements Configurable {
         connectionFailureContainer.setVisible(false);
         long startNanos = System.nanoTime();
         try {
-            // 连接检测同样使用对象序列化，保证请求结构与正式生成请求保持一致。
-            ChatCompletionRequest requestBody = ChatCompletionRequest.userMessage(
+            // 使用当前页面所选的协议检测连接，无需先保存设置。
+            String body = configuredFormat.createRequest(
                     configuredModel,
                     "仅回复 OK",
                     0,
                     false
             );
-            String body = requestBody.toJson();
             HttpRequest request = HttpRequest.newBuilder(URI.create(configuredEndpoint))
                     .timeout(Duration.ofSeconds(30))
                     .header("Authorization", "Bearer " + configuredApiKey)
@@ -294,6 +310,12 @@ public final class CommitMessageConfigurable implements Configurable {
                                     : response.body();
                             showConnectionFailure("AI 服务返回 HTTP " + response.statusCode() + "：" + responseBody, elapsedMillis);
                         } else {
+                            try {
+                                configuredFormat.readResponse(response.body()); // 同时验证响应正文与所选协议匹配。
+                            } catch (IllegalStateException exception) {
+                                showConnectionFailure(exception.getMessage(), elapsedMillis);
+                                return;
+                            }
                             connectionStatus.setText("检测成功（" + elapsedMillis + " ms）");
                             connectionStatus.setForeground(SUCCESS_COLOR);
                             connectionStatus.setToolTipText(null);
@@ -349,6 +371,7 @@ public final class CommitMessageConfigurable implements Configurable {
     public boolean isModified() {
         CommitMessageSettings.State state = CommitMessageSettings.getInstance().getState();
         return !endpoint.getText().equals(state.endpoint)
+                || !Objects.equals(apiFormat.getSelectedItem(), state.getApiFormat())
                 || !model.getText().equals(state.model)
                 || !new String(apiKey.getPassword()).equals(state.apiKey)
                 || !Objects.equals(language.getSelectedItem(), toChineseLanguageLabel(state.language))
@@ -362,6 +385,7 @@ public final class CommitMessageConfigurable implements Configurable {
     public void apply() {
         CommitMessageSettings.State state = CommitMessageSettings.getInstance().getState();
         state.endpoint = endpoint.getText().trim();
+        state.apiFormat = ((ApiFormat) apiFormat.getSelectedItem()).id(); // 持久化协议标识而非界面文字。
         state.model = model.getText().trim();
         state.apiKey = new String(apiKey.getPassword()).trim();
         state.language = (String) language.getSelectedItem();
@@ -379,6 +403,8 @@ public final class CommitMessageConfigurable implements Configurable {
     public void reset() {
         CommitMessageSettings.State state = CommitMessageSettings.getInstance().getState();
         endpoint.setText(state.endpoint);
+        apiFormat.setSelectedItem(state.getApiFormat());
+        updateEndpointHint(); // 重置时同步完整地址提示。
         model.setText(state.model);
         apiKey.setText(state.apiKey);
         language.setSelectedItem(toChineseLanguageLabel(state.language));

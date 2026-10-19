@@ -1,8 +1,8 @@
 # AI Commit Message - Free
 
-An AI commit message generator for Git in IntelliJ IDEA. Turn selected Git diffs into Conventional Commits with customizable prompts and a Chat Completions-compatible API.
+An AI commit message generator for Git in IntelliJ IDEA. Turn selected Git diffs into Conventional Commits with customizable prompts and an OpenAI Chat Completions- or Responses-compatible API.
 
-一款面向 IntelliJ IDEA 的 AI Git 提交信息生成器与代码提交助手。它可以读取 Commit 工具窗口中勾选的代码变更，调用兼容 OpenAI Chat Completions API 的模型，自动生成符合 Conventional Commits 规范的提交信息，并直接写入 Commit Message 输入框。
+一款面向 IntelliJ IDEA 的 AI Git 提交信息生成器与代码提交助手。它可以读取 Commit 工具窗口中勾选的代码变更，调用兼容 OpenAI Chat Completions 或 OpenAI Responses API 的模型，自动生成符合 Conventional Commits 规范的提交信息，并直接写入 Commit Message 输入框。
 
 ## 免费 LLM 额度，满足日常 Commit Message 需要
 
@@ -22,7 +22,7 @@ An AI commit message generator for Git in IntelliJ IDEA. Turn selected Git diffs
 - 为提交标题和每个变更列表项自动添加对应的 emoji 表情
 - 支持中文、英文和日文提交信息
 - 支持自定义提示词模板
-- 支持 OpenAI 及兼容 Chat Completions API 的第三方服务
+- 支持 OpenAI Chat Completions、OpenAI Responses 及兼容这两种 API 格式的第三方服务
 - 支持在设置页面检测接口地址、模型和 API 密钥
 - 生成过程中 Action 会切换为红色停止图标，再次点击可取消任务
 - 自动适配 IntelliJ Light/Dark 主题图标
@@ -77,17 +77,19 @@ chore(build): 🔧 更新插件构建配置并优化注释
 
 | 配置项 | 说明 | 示例 |
 | --- | --- | --- |
-| 接口地址 | 兼容 OpenAI Chat Completions API 的完整地址 | `https://api.openai.com/v1/chat/completions` |
+| 接口地址 | 与所选 API 格式对应的完整地址 | `https://api.openai.com/v1/chat/completions` 或 `https://api.openai.com/v1/responses` |
+| API 格式 | 请求与响应使用的协议，默认 OpenAI Chat Completions | OpenAI Chat Completions、OpenAI Responses |
 | 模型 | 服务支持的模型名称 | `gpt-4o-mini` |
 | API 密钥 | 调用 AI 服务使用的密钥 | `sk-...` |
 | 提交信息语言 | 生成结果使用的语言 | 中文、英文、日文 |
 | 提示词模板 | 控制提交信息格式和生成规则 | 参见下方模板变量 |
 
-填写接口地址、模型和 API 密钥后，可以点击“检测连接”。
+填写接口地址、选择 API 格式并填写模型和 API 密钥后，可以点击“检测连接”。切换格式不会自动改写接口地址，请填写服务商提供的完整 URL；地址输入框和格式下拉框的提示会展示对应示例。旧版本配置自动使用 OpenAI Chat Completions。
 
 - 检测成功时会显示绿色状态和请求耗时
 - 检测失败时会在按钮下方显示具体错误信息
 - 检测使用的是设置页面中当前填写的内容，不需要先保存配置
+- 检测同时校验返回正文是否符合所选 API 格式，HTTP 200 但无有效文本也会显示失败
 
 ## 使用方法
 
@@ -127,7 +129,7 @@ type(scope): ✨ 简洁的提交摘要
 
 ## API 兼容性
 
-插件通过以下请求格式调用 AI 服务：
+选择 **OpenAI Chat Completions** 时，插件通过以下请求格式调用 AI 服务（生成时 `stream` 为 `true`，检测时为 `false`）：
 
 ```json
 {
@@ -138,7 +140,9 @@ type(scope): ✨ 简洁的提交摘要
       "content": "生成提交信息的提示词"
     }
   ],
-  "temperature": 0.2
+  "temperature": 0.2,
+  "thinking": { "type": "disabled" },
+  "stream": true
 }
 ```
 
@@ -155,6 +159,21 @@ type(scope): ✨ 简洁的提交摘要
   ]
 }
 ```
+
+选择 **OpenAI Responses** 时，接口地址通常为 `https://api.openai.com/v1/responses`，请求格式为：
+
+```json
+{
+  "model": "gpt-4o-mini",
+  "input": "生成提交信息的提示词",
+  "stream": true,
+  "store": false
+}
+```
+
+Responses 请求不发送 Chat Completions 的 `messages`、`thinking` 或 `temperature` 参数。普通响应从 `output` 中提取 assistant 消息的 `content[].text`，且仅接受 `type: "output_text"` 的内容；流式响应使用 `response.output_text.delta`，收到 `response.completed` 后完成，避免把推理、工具调用和完成快照重复写入提交信息。失败、拒绝、未完成或中断的 Responses 响应会显示错误。
+
+本版本仅提供上述两种格式。格式标识、请求构造和响应解析集中在 `ApiFormat` 中，新增协议可以复用现有配置和生成流程。
 
 ## 本地构建
 
@@ -190,6 +209,8 @@ gradle clean buildPlugin
 build/distributions/ai-commit-message-<version>.zip
 ```
 
+协议回归测试无需 API 密钥或启动 IDE，可运行 `./gradlew protocolTest`（Windows 使用 `.\gradlew.bat protocolTest`）。此任务也包含在 `check` 中。
+
 ### 3. 启动开发沙箱
 
 ```powershell
@@ -205,6 +226,8 @@ src/main/
 ├── java/org/aicommitmessage/
 │   ├── CommitMessageConfigurable.java     # 设置页面
 │   ├── CommitMessageSettings.java         # 配置持久化
+│   ├── ApiFormat.java                     # API 格式及请求、响应策略
+│   ├── ApiResponseReader.java             # 普通 JSON / SSE 响应读取
 │   └── GenerateCommitMessageAction.java   # Diff 读取、AI 请求和 Action 控制
 └── resources/
     ├── META-INF/
@@ -237,10 +260,11 @@ src/main/
 
 ### 接口检测返回 404
 
-检查接口地址是否为完整的 Chat Completions 地址，例如：
+检查接口地址是否与 API 格式匹配，并且是完整地址，例如：
 
 ```text
 https://api.openai.com/v1/chat/completions
+https://api.openai.com/v1/responses
 ```
 
 ### 生成过程中如何停止

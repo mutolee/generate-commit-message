@@ -30,8 +30,6 @@ import java.time.Duration;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
@@ -365,7 +363,7 @@ public final class GenerateCommitMessageAction extends AnAction {
     }
 
     /**
-     * 根据用户配置的提示词模板调用兼容 OpenAI 的聊天补全接口。
+     * 根据用户配置的提示词模板和 API 格式调用 AI 服务。
      *
      * @param diff     用于生成提交信息的 Git 差异
      * @param settings AI 服务及提示词配置
@@ -388,14 +386,14 @@ public final class GenerateCommitMessageAction extends AnAction {
             // 用户省略差异变量时仍自动附加差异，避免向模型发送缺少上下文的请求。
             prompt += "\n\n代码差异：\n" + diff;
         }
-        // 通过 JSON 序列化器生成请求体，确保 Diff 中的 Tab 和控制字符得到合法转义。
-        ChatCompletionRequest requestBody = ChatCompletionRequest.userMessage(
+        // 按所选协议生成请求体，确保 Diff 中的 Tab 和控制字符得到合法转义。
+        ApiFormat format = settings.getApiFormat();
+        String body = format.createRequest(
                 settings.model,
                 prompt,
                 0.2,
                 true
         );
-        String body = requestBody.toJson();
         HttpRequest req = HttpRequest.newBuilder(URI.create(settings.endpoint)).timeout(Duration.ofSeconds(60)).header("Authorization", "Bearer " + settings.apiKey).header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8)).build();
         HttpResponse<Stream<String>> response = HttpClient.newHttpClient().send(req, HttpResponse.BodyHandlers.ofLines());
         if (response.statusCode() / 100 != 2) {
@@ -404,48 +402,9 @@ public final class GenerateCommitMessageAction extends AnAction {
                         + String.join("\n", responseLines.toList()));
             }
         }
-        StringBuilder message = new StringBuilder();
-        Pattern contentPattern = Pattern.compile("\\\"content\\\"\\s*:\\s*\\\"((?:\\\\.|[^\\\"])*)\\\"");
         try (Stream<String> responseLines = response.body()) {
-            responseLines.forEach(line -> appendStreamDelta(line, contentPattern, message, onDelta));
+            return ApiResponseReader.read(format, responseLines, onDelta); // 统一解析普通 JSON 和流式输出。
         }
-        if (message.isEmpty()) {
-            throw new IllegalStateException("AI 响应中没有找到提交信息。");
-        }
-        return message.toString().trim();
-    }
-
-    /**
-     * 解析一行 SSE 数据并把文本增量追加到完整消息及界面回调。
-     *
-     * @param line           SSE 响应行
-     * @param contentPattern 提取增量 content 字段的正则表达式
-     * @param message        接收完整消息的缓冲区
-     * @param onDelta        接收单次文本增量的回调
-     */
-    private static void appendStreamDelta(String line,
-                                          Pattern contentPattern,
-                                          StringBuilder message,
-                                          Consumer<String> onDelta) {
-        if (!line.startsWith("data:")) {
-            return;
-        }
-        String eventData = line.substring("data:".length()).trim();
-        if (eventData.isEmpty() || "[DONE]".equals(eventData)) {
-            return;
-        }
-        Matcher matcher = contentPattern.matcher(eventData);
-        if (matcher.find()) {
-            String delta = unescape(matcher.group(1));
-            if (!delta.isEmpty()) {
-                message.append(delta);
-                onDelta.accept(delta);
-            }
-        }
-    }
-
-    private static String unescape(String value) {
-        return value.replace("\\n", "\n").replace("\\r", "\r").replace("\\\"", "\"").replace("\\\\", "\\");
     }
 
     /**

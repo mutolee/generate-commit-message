@@ -14,7 +14,7 @@
 
         <p><b>Free LLM access for everyday commit messages:</b> get started with the <a href="https://www.sensenova.cn/token-plan">SenseNova Token Plan</a>, free during public beta. Its <a href="https://www.sensenova.ai/token-plan">international page</a> lists <b>1,500 requests per model every 5 hours</b> (special models excluded), a generous allowance for daily Commit Message generation. The Chinese page currently lists 60,000 credits every 5 hours; actual quotas depend on the model and current plan terms.</p>
 
-        <p>Use this AI commit assistant to summarize a Git diff, draft a commit title and change list, and review the message before committing. Customize the prompt and connect your own Chat Completions-compatible API endpoint and model.</p>
+        <p>Use this AI commit assistant to summarize a Git diff, draft a commit title and change list, and review the message before committing. Customize the prompt and connect your own OpenAI Chat Completions- or Responses-compatible API endpoint and model.</p>
 
         <h2>Highlights</h2>
         <ul>
@@ -24,13 +24,13 @@
             <li><b>Generates Conventional Commits:</b> the default prompt creates a structured commit title plus a concise change list with matching emoji.</li>
             <li><b>Works in multiple languages:</b> generate commit messages in Chinese, English, or Japanese.</li>
             <li><b>Lets you stay in control:</b> customize the prompt template, test the connection, and stop an in-progress generation from the toolbar.</li>
-            <li><b>Supports your own provider:</b> configure a Chat Completions-compatible endpoint, model, and API key.</li>
+            <li><b>Supports your own provider:</b> choose OpenAI Chat Completions (default) or OpenAI Responses, and configure the matching endpoint, model, and API key.</li>
         </ul>
 
         <h2>Quick start</h2>
         <ol>
             <li>Open <b>Settings | Tools | AI Commit Message</b>.</li>
-            <li>Enter your endpoint, model, and API key, then use <b>Test Connection</b>.</li>
+            <li>Enter your endpoint, select its API format, and enter your model and API key, then use <b>Test Connection</b>.</li>
             <li>Open the Commit tool window, select the changes to include, and click the <b>M</b> icon.</li>
         </ol>
 
@@ -43,7 +43,7 @@
         <ul>
             <li>IntelliJ IDEA 2024.3 or later</li>
             <li>Built-in Git integration enabled</li>
-            <li>A Chat Completions-compatible API endpoint and API key</li>
+            <li>An OpenAI Chat Completions- or Responses-compatible API endpoint and API key</li>
         </ul>
 
         <h2>中文说明</h2>
@@ -53,7 +53,7 @@
             <li><b>安装包仅约 34 KB：</b>1.0.1 版本 ZIP 实测为 33,606 字节，下载体积小；不同版本的安装包大小可能略有变化。</li>
             <li>支持已跟踪文件、未跟踪文件，以及非提交窗口场景下的 Git 暂存区差异。</li>
             <li>支持中文、英文、日文，可自定义提示词模板。</li>
-            <li>支持兼容 Chat Completions API 的自定义服务地址和模型。</li>
+            <li>支持 OpenAI Chat Completions（默认）和 OpenAI Responses 两种 API 格式，可配置对应的服务地址和模型。</li>
             <li>可在设置页检测连接；生成过程中再次点击红色停止图标即可取消。</li>
         </ul>
         <p>注意：所选 Git Diff 与提示词会发送到你配置的 AI 服务，请在处理私有代码前确认服务方的数据政策。</p>

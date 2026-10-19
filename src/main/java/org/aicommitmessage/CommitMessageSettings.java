@@ -97,10 +97,16 @@ public final class CommitMessageSettings implements PersistentStateComponent<Com
      */
     public static class State {
         public String endpoint = "https://api.openai.com/v1/chat/completions";
+        public String apiFormat = ApiFormat.OPENAI_CHAT_COMPLETIONS.id();
         public String model = "gpt-4o-mini";
         public String apiKey = "";
         public String language = "中文";
         public String promptTemplate = DEFAULT_PROMPT_TEMPLATE;
+
+        /** 获取协议策略；旧配置没有 apiFormat 时继续使用 Chat Completions。 */
+        public ApiFormat getApiFormat() {
+            return ApiFormat.fromId(apiFormat);
+        }
 
         /**
          * 获取用户配置的提示词模板，兼容尚未保存该字段的旧版本配置。
