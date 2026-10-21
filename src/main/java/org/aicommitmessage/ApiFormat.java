@@ -5,10 +5,16 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+
 /** 定义 API 格式及其请求、响应策略，新增协议时无需修改配置界面和生成流程。 */
 enum ApiFormat {
     OPENAI_CHAT_COMPLETIONS("openai-chat-completions", "OpenAI Chat Completions",
-            "https://api.openai.com/v1/chat/completions") {
+            "https://api.openai.com/v1/chat/completions", null) {
         /** 复用现有聊天补全请求，保持第三方服务的参数兼容性。 */
         @Override
         String createRequest(String model, String prompt, double temperature, boolean stream) {
@@ -31,7 +37,7 @@ enum ApiFormat {
             return new StreamUpdate(chatText(object(choice, "delta")), null, false);
         }
     },
-    OPENAI_RESPONSES("openai-responses", "OpenAI Responses", "https://api.openai.com/v1/responses") {
+    OPENAI_RESPONSES("openai-responses", "OpenAI Responses", "https://api.openai.com/v1/responses", "Codex Desktop") {
         /** 使用 Responses 原生 input；不携带旧协议扩展或模型可能不支持的采样参数。 */
         @Override
         String createRequest(String model, String prompt, double temperature, boolean stream) {
@@ -104,12 +110,30 @@ enum ApiFormat {
     private final String id;
     private final String label;
     private final String exampleEndpoint;
+    private final String userAgent;
 
-    /** 保存持久化标识、显示名称和完整地址示例。 */
-    ApiFormat(String id, String label, String exampleEndpoint) {
+    /** 保存持久化标识、显示名称、完整地址示例和可选客户端标识。 */
+    ApiFormat(String id, String label, String exampleEndpoint, String userAgent) {
         this.id = id;
         this.label = label;
         this.exampleEndpoint = exampleEndpoint;
+        this.userAgent = userAgent;
+    }
+
+    /** 构建统一 POST 请求，确保连接检测与正式生成使用一致的请求头和传输协议。 */
+    HttpRequest createHttpRequest(String endpoint, String apiKey, String body, Duration timeout) {
+        URI uri = URI.create(endpoint);
+        HttpRequest.Builder builder = HttpRequest.newBuilder(uri)
+                .timeout(timeout)
+                .header("Authorization", "Bearer " + apiKey)
+                .header("Content-Type", "application/json");
+        if ("http".equalsIgnoreCase(uri.getScheme())) {
+            builder.version(HttpClient.Version.HTTP_1_1); // 避免部分明文 HTTP 网关将 h2c 升级请求误判为非法方法。
+        }
+        if (userAgent != null) {
+            builder.header("User-Agent", userAgent); // 兼容按客户端标识放行的 Responses 网关。
+        }
+        return builder.POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8)).build();
     }
 
     /** 返回稳定的持久化标识，避免显示名称变化影响旧配置。 */

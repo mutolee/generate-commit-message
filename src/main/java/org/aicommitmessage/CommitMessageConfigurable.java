@@ -13,11 +13,9 @@ import com.intellij.openapi.util.text.StringUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Objects;
 
@@ -290,12 +288,8 @@ public final class CommitMessageConfigurable implements Configurable {
                     0,
                     false
             );
-            HttpRequest request = HttpRequest.newBuilder(URI.create(configuredEndpoint))
-                    .timeout(Duration.ofSeconds(30))
-                    .header("Authorization", "Bearer " + configuredApiKey)
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
-                    .build();
+            HttpRequest request = configuredFormat.createHttpRequest(
+                    configuredEndpoint, configuredApiKey, body, Duration.ofSeconds(30)); // 与正式生成共用请求头。
             // 异步检测连接，避免网络请求阻塞 IntelliJ 设置窗口。
             HttpClient.newHttpClient().sendAsync(request, HttpResponse.BodyHandlers.ofString())
                     .whenComplete((response, error) -> SwingUtilities.invokeLater(() -> {

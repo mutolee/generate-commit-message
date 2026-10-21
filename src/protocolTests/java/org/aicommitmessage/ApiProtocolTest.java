@@ -6,17 +6,42 @@ import com.google.gson.JsonParser;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.net.http.HttpRequest;
+import java.time.Duration;
 
 /** 使用真实协议样例验证请求、普通响应和 SSE，独立运行且不需要 API 密钥。 */
 public final class ApiProtocolTest {
     /** 执行协议回归用例；断言失败时通过非零退出码使构建失败。 */
     public static void main(String[] args) {
         defaultsAndRequests();
+        requestHeaders();
         plainResponses();
         streamingResponses();
         streamingChat();
         failures();
         System.out.println("API protocol regression tests passed.");
+    }
+
+    /** 验证 Responses 客户端标识，同时保持认证、请求体和旧协议行为一致。 */
+    private static void requestHeaders() {
+        for (boolean stream : List.of(false, true)) {
+            String body = ApiFormat.OPENAI_RESPONSES.createRequest("model", "just say 1", 0, stream);
+            HttpRequest request = ApiFormat.OPENAI_RESPONSES.createHttpRequest(
+                    "http://localhost:23000/v1/responses", "test-key", body, Duration.ofSeconds(30));
+            equal("Codex Desktop", request.headers().firstValue("User-Agent").orElse(null));
+            equal("Bearer test-key", request.headers().firstValue("Authorization").orElse(null));
+            equal("application/json", request.headers().firstValue("Content-Type").orElse(null));
+            equal("POST", request.method());
+            equal(java.net.http.HttpClient.Version.HTTP_1_1, request.version().orElse(null));
+            equal(Duration.ofSeconds(30), request.timeout().orElseThrow());
+        }
+        HttpRequest chat = ApiFormat.OPENAI_CHAT_COMPLETIONS.createHttpRequest(
+                "http://localhost:23000/v1/chat/completions", "test-key", "{}", Duration.ofSeconds(60));
+        equal(false, chat.headers().firstValue("User-Agent").isPresent());
+        equal(java.net.http.HttpClient.Version.HTTP_1_1, chat.version().orElse(null));
+        HttpRequest secure = ApiFormat.OPENAI_RESPONSES.createHttpRequest(
+                "https://example.com/v1/responses", "test-key", "{}", Duration.ofSeconds(30));
+        equal(false, secure.version().isPresent()); // HTTPS 保留客户端的正常协议协商。
     }
 
     /** 验证旧配置回退、稳定格式标识以及不同协议的请求字段。 */

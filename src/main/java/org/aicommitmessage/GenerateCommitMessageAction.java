@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.datatransfer.StringSelection;
-import java.net.URI;
 import java.net.http.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -394,7 +393,8 @@ public final class GenerateCommitMessageAction extends AnAction {
                 0.2,
                 true
         );
-        HttpRequest req = HttpRequest.newBuilder(URI.create(settings.endpoint)).timeout(Duration.ofSeconds(60)).header("Authorization", "Bearer " + settings.apiKey).header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8)).build();
+        HttpRequest req = format.createHttpRequest(
+                settings.endpoint, settings.apiKey, body, Duration.ofSeconds(60)); // 与连接检测共用协议请求头。
         HttpResponse<Stream<String>> response = HttpClient.newHttpClient().send(req, HttpResponse.BodyHandlers.ofLines());
         if (response.statusCode() / 100 != 2) {
             try (Stream<String> responseLines = response.body()) {

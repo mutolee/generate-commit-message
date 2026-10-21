@@ -173,6 +173,10 @@ type(scope): ✨ 简洁的提交摘要
 
 Responses 请求不发送 Chat Completions 的 `messages`、`thinking` 或 `temperature` 参数。普通响应从 `output` 中提取 assistant 消息的 `content[].text`，且仅接受 `type: "output_text"` 的内容；流式响应使用 `response.output_text.delta`，收到 `response.completed` 后完成，避免把推理、工具调用和完成快照重复写入提交信息。失败、拒绝、未完成或中断的 Responses 响应会显示错误。
 
+Responses 的连接检测和正式生成均发送 `User-Agent: Codex Desktop`，兼容按客户端标识放行的网关。
+
+明文 `http://` 接口使用 HTTP/1.1，避免部分网关因 HTTP/2 升级请求返回 `405 Invalid HTTP method`；`https://` 接口保留默认协议协商。
+
 本版本仅提供上述两种格式。格式标识、请求构造和响应解析集中在 `ApiFormat` 中，新增协议可以复用现有配置和生成流程。
 
 ## 本地构建

@@ -15,7 +15,7 @@ group = "org.aicommitmessage"
 
 // 对应 Maven 的 <version>，同时会成为生成插件包的版本号。
 // 发布新版本时应按照项目的版本策略递增此值。
-version = "1.0.6"
+version = "1.0.7"
 
 // 项目依赖的下载仓库，作用类似 Maven 的 <repositories>。
 repositories {
@@ -52,6 +52,12 @@ intellijPlatform {
 
         // 插件版本更新说明，会显示在 Marketplace 和 IDE 插件管理器的 What's New 区域。
         changeNotes = """
+            <h2>1.0.7</h2>
+            <ul>
+                <li>Use HTTP/1.1 for plain HTTP endpoints to fix HTTP 405 errors from gateways that do not support HTTP/2 upgrades.</li>
+                <li>Send the Codex Desktop User-Agent for OpenAI Responses to support gateways with client restrictions.</li>
+                <li>Share request construction between connection tests and commit message generation for consistent compatibility.</li>
+            </ul>
             <h2>1.0.6</h2>
             <ul>
                 <li>Add an API Format selector with OpenAI Chat Completions as the default and support for OpenAI Responses.</li>
