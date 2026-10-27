@@ -83,6 +83,12 @@
 
     <!-- Action 注册区：声明用户可以从菜单、工具栏或 Find Action 触发的操作。 -->
     <actions>
+        <!-- 在 Tools 底部添加带插件图标的二级菜单。 -->
+        <group id="AICommitMessage.Tools" class="org.aicommitmessage.CommitMessageMenuGroup"
+               text="AI Commit Message" popup="true" icon="/icons/commitMessage.svg">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </group>
+
         <!--
             生成提交信息的核心 Action。
             id 是 IDEA 内部的唯一操作标识，class 指向 Java 实现类，

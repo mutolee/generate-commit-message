@@ -1,13 +1,7 @@
 package org.aicommitmessage;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.BrowserUtil;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -76,29 +70,7 @@ final class CommitMessageStatusBarWidget implements StatusBarWidget, StatusBarWi
         if (disposed || project.isDisposed()) { // 项目或组件已关闭时忽略延迟到达的点击。
             return;
         }
-        DefaultActionGroup actions = new DefaultActionGroup();
-        actions.add(new DumbAwareAction("Setting", "打开 AI Commit Message 设置", AllIcons.General.Settings) { // 使用内置设置图标，索引期间也可操作。
-            /** @param actionEvent 用户选择设置菜单的事件 */
-            @Override
-            public void actionPerformed(@NotNull AnActionEvent actionEvent) {
-                if (!disposed && !project.isDisposed()) { // 打开设置前再次确认项目有效。
-                    // 按配置类定位现有页面，直接进入 Settings | Tools | AI Commit Message。
-                    ShowSettingsUtil.getInstance().showSettingsDialog(project, CommitMessageConfigurable.class);
-                }
-            }
-        });
-        DumbAwareAction githubAction = new DumbAwareAction(
-                "Github", "打开插件的 GitHub 仓库", AllIcons.Vcs.Vendors.Github) {
-            /** @param actionEvent 用户选择 GitHub 菜单的事件 */
-            @Override
-            public void actionPerformed(@NotNull AnActionEvent actionEvent) {
-                // 在系统浏览器中打开项目仓库，便于查看源码和反馈问题。
-                BrowserUtil.browse("https://github.com/mutolee/generate-commit-message");
-            }
-        };
-        // 使用平台原生副标题样式在菜单右侧显示作者，自动适配主题颜色。
-        githubAction.getTemplatePresentation().putClientProperty(ActionUtil.SECONDARY_TEXT, "Author: mutolee");
-        actions.add(githubAction); // 将 GitHub 入口放在设置菜单下方。
+        DefaultActionGroup actions = CommitMessageMenuGroup.createPopupActions(project, () -> !disposed);
         Component component = event.getComponent(); // 将菜单锚定到被点击的状态栏图标。
         ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
                 "AI Commit Message", actions, DataManager.getInstance().getDataContext(component),
