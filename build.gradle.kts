@@ -15,7 +15,7 @@ group = "org.aicommitmessage"
 
 // 对应 Maven 的 <version>，同时会成为生成插件包的版本号。
 // 发布新版本时应按照项目的版本策略递增此值。
-version = "1.0.8"
+version = "1.0.9"
 
 // 项目依赖的下载仓库，作用类似 Maven 的 <repositories>。
 repositories {
@@ -52,6 +52,12 @@ intellijPlatform {
 
         // 插件版本更新说明，会显示在 Marketplace 和 IDE 插件管理器的 What's New 区域。
         changeNotes = """
+            <h2>1.0.9</h2>
+            <ul>
+                <li>Show complete connection error details without truncation, with automatic wrapping and height adjustment that keeps long URLs and JSON within the settings page width.</li>
+                <li>Allow selecting and copying connection error details, including Select All and Copy keyboard shortcuts.</li>
+                <li>Show successful connection tests taking more than 1000 ms in a theme-aware warning color; faster results remain green and failures remain red.</li>
+            </ul>
             <h2>1.0.8</h2>
             <ul>
                 <li>Add an AI Commit Message submenu with the plugin icon at the bottom of the Tools menu.</li>

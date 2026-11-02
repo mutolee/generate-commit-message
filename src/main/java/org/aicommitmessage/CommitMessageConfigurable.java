@@ -36,9 +36,9 @@ public final class CommitMessageConfigurable implements Configurable {
     private JButton testConnectionButton;
     private JBLabel connectionStatus;
     private JBTextArea connectionFailureDetail;
-    private JBScrollPane connectionFailureContainer;
 
     private static final Color SUCCESS_COLOR = new JBColor(0x218739, 0x62C370);
+    private static final Color WARNING_COLOR = new JBColor(0x946200, 0xE9B44C);
     private static final Color FAILURE_COLOR = new JBColor(0xC42B1C, 0xFF6B68);
 
     /**
@@ -66,7 +66,7 @@ public final class CommitMessageConfigurable implements Configurable {
         promptTemplate.setMargin(JBUI.insets(8, 10));
 
         testConnectionButton = new JButton("检测连接");
-        // 使用 JLabel 让单行检测结果沿按钮基线自然居中；失败详情通过 HTML 宽度自动换行。
+        // 单行检测状态与按钮居中对齐，失败详情在独立文本区域展示。
         connectionStatus = new JBLabel("尚未检测");
         connectionStatus.setMinimumSize(new Dimension(0, JBUI.scale(24)));
         // 不限制高度，让 HTML 换行后的多行异常完整显示，避免上下内容被裁切。
@@ -74,9 +74,10 @@ public final class CommitMessageConfigurable implements Configurable {
         connectionStatus.setForeground(UIUtil.getContextHelpForeground());
         connectionStatus.setAlignmentY(Component.CENTER_ALIGNMENT);
         testConnectionButton.setAlignmentY(Component.CENTER_ALIGNMENT);
-        connectionFailureDetail = new JBTextArea(3, 0);
+        connectionFailureDetail = new AutoHeightTextArea();
         connectionFailureDetail.setEditable(false);
-        connectionFailureDetail.setFocusable(false);
+        // 保留焦点，支持鼠标选择、Ctrl+A 全选和 Ctrl+C 复制。
+        connectionFailureDetail.setFocusable(true);
         connectionFailureDetail.setColumns(0);
         connectionFailureDetail.setLineWrap(true);
         // 对 URL、JSON 等没有空格的异常内容也按字符断行，避免撑宽页面。
@@ -89,18 +90,8 @@ public final class CommitMessageConfigurable implements Configurable {
         connectionFailureDetail.setForeground(FAILURE_COLOR);
         connectionFailureDetail.setAlignmentX(Component.LEFT_ALIGNMENT);
         connectionFailureDetail.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
-        // 与提示词文本框一样交给 Viewport 管理宽度，禁止异常内容撑宽外层设置页面。
-        connectionFailureContainer = new JBScrollPane(connectionFailureDetail);
-        connectionFailureContainer.setBorder(null);
-        connectionFailureContainer.setViewportBorder(null);
-        connectionFailureContainer.setOpaque(false);
-        connectionFailureContainer.getViewport().setOpaque(false);
-        connectionFailureContainer.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        connectionFailureContainer.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-        connectionFailureContainer.setPreferredSize(new Dimension(0, JBUI.scale(54)));
-        connectionFailureContainer.setMinimumSize(new Dimension(0, JBUI.scale(54)));
-        connectionFailureContainer.setMaximumSize(new Dimension(Integer.MAX_VALUE, JBUI.scale(54)));
-        connectionFailureContainer.setVisible(false);
+        // 高度随实际宽度及文本换行变化，长内容通过设置窗口的外层滚动区域查看。
+        connectionFailureDetail.setVisible(false);
 
         JPanel connectionTopRow = new JPanel();
         connectionTopRow.setLayout(new BoxLayout(connectionTopRow, BoxLayout.X_AXIS));
@@ -126,7 +117,7 @@ public final class CommitMessageConfigurable implements Configurable {
         addFormRow(serviceForm, "API 密钥：", apiKey, 3);
         addFormRow(serviceForm, "提交信息语言：", language, 4);
         addFormRow(serviceForm, "连接检测：", connectionTestPanel, 5);
-        addDetailRow(serviceForm, connectionFailureContainer, 6);
+        addDetailRow(serviceForm, connectionFailureDetail, 6);
         serviceForm.setAlignmentX(Component.LEFT_ALIGNMENT);
         serviceForm.setMinimumSize(new Dimension(0, 0));
         serviceForm.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
@@ -278,7 +269,7 @@ public final class CommitMessageConfigurable implements Configurable {
         connectionStatus.setText("检测中…");
         connectionStatus.setForeground(UIUtil.getContextHelpForeground());
         connectionStatus.setToolTipText(null);
-        connectionFailureContainer.setVisible(false);
+        connectionFailureDetail.setVisible(false);
         long startNanos = System.nanoTime();
         try {
             // 使用当前页面所选的协议检测连接，无需先保存设置。
@@ -299,10 +290,7 @@ public final class CommitMessageConfigurable implements Configurable {
                             Throwable cause = error.getCause() == null ? error : error.getCause();
                             showConnectionFailure(StringUtil.notNullize(cause.getMessage(), cause.toString()), elapsedMillis);
                         } else if (response.statusCode() / 100 != 2) {
-                            String responseBody = response.body().length() > 500
-                                    ? response.body().substring(0, 500) + "…"
-                                    : response.body();
-                            showConnectionFailure("AI 服务返回 HTTP " + response.statusCode() + "：" + responseBody, elapsedMillis);
+                            showConnectionFailure("AI 服务返回 HTTP " + response.statusCode() + "：" + response.body(), elapsedMillis);
                         } else {
                             try {
                                 configuredFormat.readResponse(response.body()); // 同时验证响应正文与所选协议匹配。
@@ -311,9 +299,10 @@ public final class CommitMessageConfigurable implements Configurable {
                                 return;
                             }
                             connectionStatus.setText("检测成功（" + elapsedMillis + " ms）");
-                            connectionStatus.setForeground(SUCCESS_COLOR);
+                            // 超过一秒的成功请求使用警告色提示延迟，失败状态仍使用红色。
+                            connectionStatus.setForeground(elapsedMillis > 1000 ? WARNING_COLOR : SUCCESS_COLOR);
                             connectionStatus.setToolTipText(null);
-                            connectionFailureContainer.setVisible(false);
+                            connectionFailureDetail.setVisible(false);
                             serviceForm.revalidate();
                         }
                     }));
@@ -335,11 +324,10 @@ public final class CommitMessageConfigurable implements Configurable {
         if (detail.isBlank()) {
             detail = "未知异常";
         }
-        String inlineDetail = detail.length() > 500 ? detail.substring(0, 500) + "…" : detail;
         connectionStatus.setText("");
-        connectionFailureDetail.setText("检测失败（" + elapsedMillis + " ms）：" + inlineDetail);
+        connectionFailureDetail.setText("检测失败（" + elapsedMillis + " ms）：" + detail);
         connectionFailureDetail.setCaretPosition(0);
-        connectionFailureContainer.setVisible(true);
+        connectionFailureDetail.setVisible(true);
         serviceForm.revalidate();
     }
 
