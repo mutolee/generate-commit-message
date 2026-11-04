@@ -92,9 +92,9 @@
         <!--
             生成提交信息的核心 Action。
             id 是 IDEA 内部的唯一操作标识，class 指向 Java 实现类，
-            text 是界面显示名称，description 是操作说明和辅助提示。
+            名称与说明由 Action 按 IDE 语言动态提供。
         -->
-        <action id="AICommitMessage.Generate" class="org.aicommitmessage.GenerateCommitMessageAction" text="生成提交信息" description="根据已暂存的 Git 变更生成提交信息" icon="/icons/commitMessage.svg">
+        <action id="AICommitMessage.Generate" class="org.aicommitmessage.GenerateCommitMessageAction" icon="/icons/commitMessage.svg">
             <!-- 将 Action 添加到 2024.3 非模态提交界面的工具栏末尾。 -->
             <add-to-group group-id="ChangesView.CommitToolbar" anchor="first"/>
         </action>

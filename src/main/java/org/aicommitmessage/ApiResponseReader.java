@@ -44,7 +44,7 @@ final class ApiResponseReader {
             reader.event(eventData.toString()); // 处理末尾未带空行的最后一帧。
         }
         if (format.requiresCompletionEvent() && !reader.completed) {
-            throw new IllegalStateException("AI 响应流在完成前中断，请重试。");
+            throw new LocalizedApiException("response.streamInterrupted", "");
         }
         return ApiFormat.requireText(reader.message.toString());
     }
@@ -75,7 +75,7 @@ final class ApiResponseReader {
         }
         if ("[DONE]".equals(data.trim())) {
             if (format.requiresCompletionEvent()) {
-                throw new IllegalStateException("AI 响应流缺少完成事件，请检查 API 格式。");
+                throw new LocalizedApiException("response.streamMissingCompletion", "");
             }
             completed = true;
             return;

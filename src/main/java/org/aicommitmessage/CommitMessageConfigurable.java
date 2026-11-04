@@ -12,6 +12,8 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.openapi.util.text.StringUtil;
 
 import javax.swing.*;
+
+import static org.aicommitmessage.SettingsMessages.message;
 import java.awt.*;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -59,15 +61,32 @@ public final class CommitMessageConfigurable implements Configurable {
         model = new JBTextField();
         apiKey = new JBPasswordField();
         language = new JComboBox<>(new String[]{"中文", "英文", "日文"});
+        // 本地化显示文字，保留旧版保存值及传给模型的语言，避免切换 IDE 语言改变用户配置。
+        language.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                          boolean selected, boolean focused) {
+                super.getListCellRendererComponent(list, value, index, selected, focused);
+                if (value != null) {
+                    setText(switch (value.toString()) {
+                        case "中文" -> message("language.zh");
+                        case "英文" -> message("language.en");
+                        case "日文" -> message("language.ja");
+                        default -> value.toString();
+                    });
+                }
+                return this;
+            }
+        });
         promptTemplate = new JBTextArea(9, 0);
         promptTemplate.setColumns(0);
         promptTemplate.setLineWrap(true);
         promptTemplate.setWrapStyleWord(true);
         promptTemplate.setMargin(JBUI.insets(8, 10));
 
-        testConnectionButton = new JButton("检测连接");
+        testConnectionButton = new JButton(message("connection.test"));
         // 单行检测状态与按钮居中对齐，失败详情在独立文本区域展示。
-        connectionStatus = new JBLabel("尚未检测");
+        connectionStatus = new JBLabel(message("connection.idle"));
         connectionStatus.setMinimumSize(new Dimension(0, JBUI.scale(24)));
         // 不限制高度，让 HTML 换行后的多行异常完整显示，避免上下内容被裁切。
         connectionStatus.setMaximumSize(new Dimension(JBUI.scale(420), Integer.MAX_VALUE));
@@ -111,12 +130,12 @@ public final class CommitMessageConfigurable implements Configurable {
         testConnectionButton.addActionListener(event -> testConnection());
 
         serviceForm = new JPanel(new GridBagLayout());
-        addFormRow(serviceForm, "接口地址：", endpoint, 0);
-        addFormRow(serviceForm, "API 格式：", apiFormat, 1);
-        addFormRow(serviceForm, "模型：", model, 2);
-        addFormRow(serviceForm, "API 密钥：", apiKey, 3);
-        addFormRow(serviceForm, "提交信息语言：", language, 4);
-        addFormRow(serviceForm, "连接检测：", connectionTestPanel, 5);
+        addFormRow(serviceForm, message("field.endpoint"), endpoint, 0);
+        addFormRow(serviceForm, message("field.format"), apiFormat, 1);
+        addFormRow(serviceForm, message("field.model"), model, 2);
+        addFormRow(serviceForm, message("field.key"), apiKey, 3);
+        addFormRow(serviceForm, message("field.language"), language, 4);
+        addFormRow(serviceForm, message("field.connection"), connectionTestPanel, 5);
         addDetailRow(serviceForm, connectionFailureDetail, 6);
         serviceForm.setAlignmentX(Component.LEFT_ALIGNMENT);
         serviceForm.setMinimumSize(new Dimension(0, 0));
@@ -128,7 +147,7 @@ public final class CommitMessageConfigurable implements Configurable {
         promptScrollPane.setMinimumSize(new Dimension(0, JBUI.scale(150)));
         promptScrollPane.setMaximumSize(new Dimension(Integer.MAX_VALUE, JBUI.scale(240)));
         promptScrollPane.setAlignmentX(Component.LEFT_ALIGNMENT);
-        JButton restorePrompt = new JButton("恢复默认提示词");
+        JButton restorePrompt = new JButton(message("prompt.restore"));
         // 仅恢复编辑框中的默认值，用户仍需点击 Apply 才会保存。
         restorePrompt.addActionListener(event -> promptTemplate.setText(CommitMessageSettings.DEFAULT_PROMPT_TEMPLATE));
 
@@ -142,13 +161,13 @@ public final class CommitMessageConfigurable implements Configurable {
         content.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
         content.add(createPageHeader());
         content.add(Box.createVerticalStrut(JBUI.scale(22)));
-        content.add(createSectionTitle("AI 服务"));
+        content.add(createSectionTitle(message("section.service")));
         content.add(Box.createVerticalStrut(JBUI.scale(8)));
         content.add(serviceForm);
         content.add(Box.createVerticalStrut(JBUI.scale(20)));
-        content.add(createSectionTitle("提示词模板"));
+        content.add(createSectionTitle(message("section.prompt")));
         content.add(Box.createVerticalStrut(JBUI.scale(6)));
-        content.add(createHint("变量：{{language}}（语言），{{diff}}（Git 差异）。省略差异变量时会自动追加。"));
+        content.add(createHint(message("prompt.hint")));
         content.add(Box.createVerticalStrut(JBUI.scale(8)));
         content.add(promptScrollPane);
         content.add(Box.createVerticalStrut(JBUI.scale(8)));
@@ -178,8 +197,8 @@ public final class CommitMessageConfigurable implements Configurable {
         title.setAlignmentX(Component.LEFT_ALIGNMENT);
         header.add(title);
         header.add(Box.createVerticalStrut(JBUI.scale(5)));
-        header.add(createHint("连接 AI 服务，根据代码变更生成清晰、规范的提交信息。"));
-        header.add(createHint("支持 OpenAI Chat Completions、OpenAI Responses 及兼容服务，请选择对应的 API 格式。"));
+        header.add(createHint(message("header.intro")));
+        header.add(createHint(message("header.formats")));
         return header;
     }
 
@@ -187,7 +206,7 @@ public final class CommitMessageConfigurable implements Configurable {
     private void updateEndpointHint() {
         ApiFormat selectedFormat = (ApiFormat) apiFormat.getSelectedItem();
         if (selectedFormat != null) {
-            String hint = "填写完整接口地址，例如：" + selectedFormat.exampleEndpoint();
+            String hint = message("endpoint.hint", selectedFormat.exampleEndpoint());
             endpoint.getEmptyText().setText(selectedFormat.exampleEndpoint());
             endpoint.setToolTipText(hint);
             apiFormat.setToolTipText(hint);
@@ -261,12 +280,12 @@ public final class CommitMessageConfigurable implements Configurable {
         String configuredModel = model.getText().trim();
         String configuredApiKey = new String(apiKey.getPassword()).trim();
         if (configuredEndpoint.isEmpty() || configuredModel.isEmpty() || configuredApiKey.isEmpty()) {
-            showConnectionFailure("请完整填写接口地址、模型和 API 密钥。", 0);
+            showConnectionFailure(message("connection.required"), 0);
             return;
         }
 
         testConnectionButton.setEnabled(false);
-        connectionStatus.setText("检测中…");
+        connectionStatus.setText(message("connection.testing"));
         connectionStatus.setForeground(UIUtil.getContextHelpForeground());
         connectionStatus.setToolTipText(null);
         connectionFailureDetail.setVisible(false);
@@ -275,7 +294,7 @@ public final class CommitMessageConfigurable implements Configurable {
             // 使用当前页面所选的协议检测连接，无需先保存设置。
             String body = configuredFormat.createRequest(
                     configuredModel,
-                    "仅回复 OK",
+                    "Reply only with OK",
                     0,
                     false
             );
@@ -290,15 +309,15 @@ public final class CommitMessageConfigurable implements Configurable {
                             Throwable cause = error.getCause() == null ? error : error.getCause();
                             showConnectionFailure(StringUtil.notNullize(cause.getMessage(), cause.toString()), elapsedMillis);
                         } else if (response.statusCode() / 100 != 2) {
-                            showConnectionFailure("AI 服务返回 HTTP " + response.statusCode() + "：" + response.body(), elapsedMillis);
+                            showConnectionFailure(message("connection.http", response.statusCode(), response.body()), elapsedMillis);
                         } else {
                             try {
                                 configuredFormat.readResponse(response.body()); // 同时验证响应正文与所选协议匹配。
                             } catch (IllegalStateException exception) {
-                                showConnectionFailure(exception.getMessage(), elapsedMillis);
+                                showConnectionFailure(exception.getLocalizedMessage(), elapsedMillis);
                                 return;
                             }
-                            connectionStatus.setText("检测成功（" + elapsedMillis + " ms）");
+                            connectionStatus.setText(message("connection.success", elapsedMillis));
                             // 超过一秒的成功请求使用警告色提示延迟，失败状态仍使用红色。
                             connectionStatus.setForeground(elapsedMillis > 1000 ? WARNING_COLOR : SUCCESS_COLOR);
                             connectionStatus.setToolTipText(null);
@@ -308,7 +327,7 @@ public final class CommitMessageConfigurable implements Configurable {
                     }));
         } catch (Exception exception) {
             testConnectionButton.setEnabled(true);
-            showConnectionFailure(Objects.toString(exception.getMessage(), "未知配置异常"),
+            showConnectionFailure(Objects.toString(exception.getMessage(), message("error.configuration")),
                     (System.nanoTime() - startNanos) / 1_000_000);
         }
     }
@@ -320,12 +339,12 @@ public final class CommitMessageConfigurable implements Configurable {
      * @param elapsedMillis 检测耗时（毫秒）
      */
     private void showConnectionFailure(String message, long elapsedMillis) {
-        String detail = StringUtil.notNullize(message, "未知异常");
+        String detail = StringUtil.notNullize(message, message("error.unknown"));
         if (detail.isBlank()) {
-            detail = "未知异常";
+            detail = message("error.unknown");
         }
         connectionStatus.setText("");
-        connectionFailureDetail.setText("检测失败（" + elapsedMillis + " ms）：" + detail);
+        connectionFailureDetail.setText(message("connection.failure", elapsedMillis, detail));
         connectionFailureDetail.setCaretPosition(0);
         connectionFailureDetail.setVisible(true);
         serviceForm.revalidate();

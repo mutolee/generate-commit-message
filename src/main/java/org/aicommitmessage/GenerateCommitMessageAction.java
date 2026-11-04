@@ -21,6 +21,8 @@ import com.intellij.vcs.commit.CommitWorkflowUi;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+
+import static org.aicommitmessage.SettingsMessages.message;
 import java.awt.datatransfer.StringSelection;
 import java.net.http.*;
 import java.nio.charset.StandardCharsets;
@@ -45,6 +47,11 @@ public final class GenerateCommitMessageAction extends AnAction {
     private static final Icon STOP_ICON = IconLoader.getIcon("/icons/stopGeneration.svg", GenerateCommitMessageAction.class);
     private static final ConcurrentMap<Project, GenerationControl> RUNNING_GENERATIONS = new ConcurrentHashMap<>();
 
+    /** 使用延迟求值的文案，同时覆盖工具栏与 Find Action 中的名称和说明。 */
+    public GenerateCommitMessageAction() {
+        super(() -> message("action.generate"), () -> message("action.description"), GENERATE_ICON);
+    }
+
     /**
      * 处理用户点击生成按钮的操作。
      */
@@ -59,14 +66,14 @@ public final class GenerateCommitMessageAction extends AnAction {
         if (runningGeneration != null) {
             // 再次点击红色停止图标时，同时取消进度指示器并中断网络请求线程。
             runningGeneration.cancel();
-            event.getPresentation().setText("正在停止生成任务");
+            event.getPresentation().setText(message("action.stopping"));
             return;
         }
 
         GenerationControl generationControl = new GenerationControl();
         RUNNING_GENERATIONS.put(project, generationControl);
         event.getPresentation().setIcon(STOP_ICON);
-        event.getPresentation().setText("停止生成提交信息");
+        event.getPresentation().setText(message("action.stop"));
 
         // 在事件线程中读取提交界面的勾选状态，避免后台线程访问 Swing UI 状态。
         CommitWorkflowUi workflowUi = event.getData(VcsDataKeys.COMMIT_WORKFLOW_UI);
@@ -75,7 +82,7 @@ public final class GenerateCommitMessageAction extends AnAction {
         boolean hasCommitUiContext = workflowUi != null;
 
         // 将耗时的 Git 和网络请求放入后台任务，避免阻塞 IDEA 界面。
-        new Task.Backgroundable(project, "正在生成提交信息", true) {
+        new Task.Backgroundable(project, message("generation.progress"), true) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
                 generationControl.start(indicator);
@@ -89,10 +96,10 @@ public final class GenerateCommitMessageAction extends AnAction {
                             : stagedDiff(project);
                     if (diff.isBlank()) {
                         throw new IllegalStateException(hasCommitUiContext
-                                ? "提交工具窗口中没有选中的变更。"
-                                : "没有找到已暂存的变更，请先暂存文件再生成提交信息。");
+                                ? message("generation.noSelection")
+                                : message("generation.noStaged"));
                     }
-                    indicator.setText("正在调用 AI 服务…");
+                    indicator.setText(message("generation.calling"));
                     StringBuilder streamedMessage = new StringBuilder();
                     if (workflowUi != null) {
                         // 在接收流式内容前清空提交框，后续增量内容将产生打字机式写入效果。
@@ -131,7 +138,7 @@ public final class GenerateCommitMessageAction extends AnAction {
                         // 部分网络异常没有 message，需生成非空文本以满足 IntelliJ 通知 API 的参数约束。
                         SwingUtilities.invokeLater(() -> showNotification(
                                 project,
-                                "生成提交信息失败",
+                                message("generation.failed"),
                                 describeException(ex),
                                 NotificationType.ERROR
                         ));
@@ -140,7 +147,7 @@ public final class GenerateCommitMessageAction extends AnAction {
                     RUNNING_GENERATIONS.remove(project, generationControl);
                     SwingUtilities.invokeLater(() -> {
                         event.getPresentation().setIcon(GENERATE_ICON);
-                        event.getPresentation().setText("生成提交信息");
+                        event.getPresentation().setText(message("action.generate"));
                     });
                 }
             }
@@ -157,7 +164,8 @@ public final class GenerateCommitMessageAction extends AnAction {
         Project project = event.getProject();
         boolean running = project != null && RUNNING_GENERATIONS.containsKey(project);
         event.getPresentation().setIcon(running ? STOP_ICON : GENERATE_ICON);
-        event.getPresentation().setText(running ? "停止生成提交信息" : "生成提交信息");
+        event.getPresentation().setText(running ? message("action.stop") : message("action.generate"));
+        event.getPresentation().setDescription(message(running ? "action.stopDescription" : "action.description"));
         event.getPresentation().setEnabled(project != null);
     }
 
@@ -223,7 +231,7 @@ public final class GenerateCommitMessageAction extends AnAction {
                                        List<FilePath> includedUnversionedFiles) throws Exception {
         String basePath = project.getBasePath();
         if (basePath == null) {
-            throw new IllegalStateException("无法获取项目根目录。");
+            throw new IllegalStateException(message("generation.noRoot"));
         }
 
         Path projectRoot = Path.of(basePath).toAbsolutePath().normalize();
@@ -248,7 +256,7 @@ public final class GenerateCommitMessageAction extends AnAction {
             command.addParameters(List.copyOf(relativePaths));
             ProcessOutput output = new CapturingProcessHandler(command).runProcess(30_000);
             if (output.getExitCode() != 0) {
-                throw new IllegalStateException(StringUtil.notNullize(output.getStderr(), "获取 Git 差异失败"));
+                throw new IllegalStateException(StringUtil.notNullize(output.getStderr(), message("generation.diffFailed")));
             }
             diff.append(output.getStdout());
         }
@@ -356,7 +364,7 @@ public final class GenerateCommitMessageAction extends AnAction {
                 .withCharset(StandardCharsets.UTF_8);
         ProcessOutput output = new CapturingProcessHandler(command).runProcess(30_000);
         if (output.getExitCode() != 0) {
-            throw new IllegalStateException(StringUtil.notNullize(output.getStderr(), "获取 Git 差异失败"));
+            throw new IllegalStateException(StringUtil.notNullize(output.getStderr(), message("generation.diffFailed")));
         }
         return output.getStdout();
     }
@@ -374,7 +382,7 @@ public final class GenerateCommitMessageAction extends AnAction {
                                   CommitMessageSettings.State settings,
                                   Consumer<String> onDelta) throws Exception {
         if (settings.apiKey == null || settings.apiKey.isBlank()) {
-            throw new IllegalStateException("请先在“设置 | 工具 | AI Commit Message”中配置 API 密钥。");
+            throw new IllegalStateException(message("generation.keyRequired"));
         }
         // 替换模板变量，让用户可以控制生成规则，同时由插件注入语言和实际差异。
         String promptTemplate = settings.getPromptTemplate();
@@ -398,8 +406,7 @@ public final class GenerateCommitMessageAction extends AnAction {
         HttpResponse<Stream<String>> response = HttpClient.newHttpClient().send(req, HttpResponse.BodyHandlers.ofLines());
         if (response.statusCode() / 100 != 2) {
             try (Stream<String> responseLines = response.body()) {
-                throw new IllegalStateException("AI 服务返回 HTTP " + response.statusCode() + "："
-                        + String.join("\n", responseLines.toList()));
+                throw new IllegalStateException(message("connection.http", response.statusCode(), String.join("\n", responseLines.toList())));
             }
         }
         try (Stream<String> responseLines = response.body()) {
@@ -414,18 +421,21 @@ public final class GenerateCommitMessageAction extends AnAction {
      * @return 非空且可读的错误信息
      */
     private static String describeException(Throwable exception) {
+        if (exception instanceof LocalizedApiException) {
+            return exception.getLocalizedMessage();
+        }
         Throwable cause = exception;
         boolean connectionFailure = cause instanceof java.net.ConnectException;
         while (cause.getCause() != null && cause.getCause() != cause) {
             cause = cause.getCause();
             connectionFailure = connectionFailure || cause instanceof java.net.ConnectException;
         }
-        String message = cause.getMessage();
+        String message = cause.getLocalizedMessage();
         if (message != null && !message.isBlank()) {
             return message;
         }
         if (connectionFailure) {
-            return "无法连接到 AI 服务，请检查接口地址、网络、代理和防火墙。";
+            return message("generation.connectionFailed");
         }
         return cause.getClass().getName();
     }
@@ -439,7 +449,7 @@ public final class GenerateCommitMessageAction extends AnAction {
      * @param type    通知类型
      */
     private static void showNotification(Project project, String title, String content, NotificationType type) {
-        String safeContent = content == null || content.isBlank() ? "未知错误" : content;
+        String safeContent = content == null || content.isBlank() ? message("error.unknown") : content;
         NotificationGroupManager.getInstance()
                 .getNotificationGroup("AI Commit Message")
                 .createNotification(title, safeContent, type)

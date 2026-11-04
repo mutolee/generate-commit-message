@@ -69,7 +69,7 @@ enum ApiFormat {
                     }
                     JsonObject content = part.getAsJsonObject();
                     if ("refusal".equals(string(content, "type"))) {
-                        throw new IllegalStateException("AI 服务拒绝生成：" + string(content, "refusal"));
+                        throw new LocalizedApiException("response.refused", string(content, "refusal"));
                     }
                     if ("output_text".equals(string(content, "type"))) {
                         text.append(string(content, "text")); // 不采集任何其他内容类型。
@@ -92,10 +92,10 @@ enum ApiFormat {
                 case "response.failed", "response.incomplete" -> {
                     JsonObject response = object(event, "response");
                     checkError(response); // 优先保留服务返回的详细失败原因。
-                    throw new IllegalStateException("AI 响应未完成：" + string(event, "type") + " "
+                    throw new LocalizedApiException("response.incomplete", string(event, "type") + " "
                             + string(object(response, "incomplete_details"), "reason"));
                 }
-                case "response.refusal.done" -> throw new IllegalStateException("AI 服务拒绝生成：" + string(event, "refusal"));
+                case "response.refusal.done" -> throw new LocalizedApiException("response.refused", string(event, "refusal"));
                 default -> new StreamUpdate("", null, false); // 忽略元数据、推理和重复的 text.done 事件。
             };
         }
@@ -191,15 +191,15 @@ enum ApiFormat {
                 return value.getAsJsonObject();
             }
         } catch (RuntimeException exception) {
-            throw new IllegalStateException("AI 服务返回了无效的 JSON 响应，请检查接口地址和 API 格式。", exception);
+            throw new LocalizedApiException("response.invalidJson", "", exception);
         }
-        throw new IllegalStateException("AI 服务返回的 JSON 不是对象，请检查 API 格式。");
+        throw new LocalizedApiException("response.notObject", "");
     }
 
     /** 拒绝空白正文，避免连接检测误报成功或写入空提交信息。 */
     static String requireText(String text) {
         if (text == null || text.isBlank()) {
-            throw new IllegalStateException("AI 响应中没有找到提交信息，请检查 API 格式。");
+            throw new LocalizedApiException("response.empty", "");
         }
         return text.trim();
     }
@@ -209,10 +209,10 @@ enum ApiFormat {
         JsonElement error = value.get("error");
         if (error != null && !error.isJsonNull()) {
             String detail = error.isJsonObject() ? string(error.getAsJsonObject(), "message") : error.toString();
-            throw new IllegalStateException("AI 服务错误：" + (detail.isBlank() ? error.toString() : detail));
+            throw new LocalizedApiException("response.error", (detail.isBlank() ? error.toString() : detail));
         }
         if ("error".equals(string(value, "type"))) {
-            throw new IllegalStateException("AI 服务错误：" + string(value, "message"));
+            throw new LocalizedApiException("response.error", string(value, "message"));
         }
     }
 
@@ -221,7 +221,7 @@ enum ApiFormat {
         checkError(response);
         String status = string(response, "status");
         if (!status.isEmpty() && !"completed".equals(status)) {
-            throw new IllegalStateException("AI 响应未完成：" + status + " "
+            throw new LocalizedApiException("response.incomplete", status + " "
                     + string(object(response, "incomplete_details"), "reason"));
         }
     }
@@ -236,7 +236,7 @@ enum ApiFormat {
     private static void checkChatFinishReason(JsonObject choice) {
         String finishReason = string(choice, "finish_reason");
         if ("length".equals(finishReason) || "content_filter".equals(finishReason)) {
-            throw new IllegalStateException("AI 响应未完成：" + finishReason);
+            throw new LocalizedApiException("response.incomplete", finishReason);
         }
     }
 
@@ -244,7 +244,7 @@ enum ApiFormat {
     private static String chatText(JsonObject message) {
         String refusal = string(message, "refusal");
         if (!refusal.isEmpty()) {
-            throw new IllegalStateException("AI 服务拒绝生成：" + refusal);
+            throw new LocalizedApiException("response.refused", refusal);
         }
         JsonElement content = message.get("content");
         if (content != null && content.isJsonPrimitive() && content.getAsJsonPrimitive().isString()) {

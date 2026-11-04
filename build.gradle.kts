@@ -15,7 +15,7 @@ group = "org.aicommitmessage"
 
 // 对应 Maven 的 <version>，同时会成为生成插件包的版本号。
 // 发布新版本时应按照项目的版本策略递增此值。
-version = "1.0.9"
+version = "1.0.10"
 
 // 项目依赖的下载仓库，作用类似 Maven 的 <repositories>。
 repositories {
@@ -52,6 +52,12 @@ intellijPlatform {
 
         // 插件版本更新说明，会显示在 Marketplace 和 IDE 插件管理器的 What's New 区域。
         changeNotes = """
+            <h2>1.0.10</h2>
+            <ul>
+                <li>Follow the IDE UI language in settings, with Chinese, English, and Japanese translations and English fallback for other languages.</li>
+                <li>Localize the Generate Commit Message action, stop controls, progress messages, and error notifications.</li>
+                <li>Preserve saved commit message language and prompt templates when the IDE language changes.</li>
+            </ul>
             <h2>1.0.9</h2>
             <ul>
                 <li>Show complete connection error details without truncation, with automatic wrapping and height adjustment that keeps long URLs and JSON within the settings page width.</li>
@@ -145,6 +151,13 @@ val protocolTest by tasks.registering(JavaExec::class) {
     mainClass.set("org.aicommitmessage.ApiProtocolTest")
 }
 
+val settingsLocalizationTest by tasks.registering(JavaExec::class) {
+    dependsOn(tasks.named(protocolTests.classesTaskName))
+    classpath = protocolTests.runtimeClasspath
+    mainClass.set("org.aicommitmessage.SettingsMessagesTest")
+}
+
 tasks.check {
     dependsOn(protocolTest)
+    dependsOn(settingsLocalizationTest)
 }
