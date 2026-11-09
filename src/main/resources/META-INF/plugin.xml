@@ -38,6 +38,7 @@
 
         <h2>Privacy</h2>
         <p>The selected Git diff and prompt are sent only to the AI endpoint you configure. Your API key is stored in IntelliJ IDEA's local non-roaming settings. Review your provider's data policy before sending proprietary code.</p>
+        <p>Update checks send the plugin ID and IDE build number to JetBrains Marketplace. No code, project paths, prompts, or API keys are included.</p>
 
         <h2>Requirements</h2>
         <ul>
@@ -69,6 +70,9 @@
     <extensions defaultExtensionNs="com.intellij">
         <!-- 通知组：仅用于显示提交信息生成失败的气泡通知。 -->
         <notificationGroup id="AI Commit Message" displayType="BALLOON"/>
+        <!-- 更新提醒使用独立通知组，项目启动只触发应用级后台检查。 -->
+        <notificationGroup id="AI Commit Message Updates" displayType="BALLOON"/>
+        <postStartupActivity implementation="org.aicommitmessage.PluginUpdateStartupActivity"/>
 
         <!-- 默认在右下角状态栏显示插件图标，提供设置页快捷入口。 -->
         <statusBarWidgetFactory id="AICommitMessage.StatusBar"

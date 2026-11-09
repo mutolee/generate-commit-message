@@ -15,7 +15,7 @@ group = "org.aicommitmessage"
 
 // 对应 Maven 的 <version>，同时会成为生成插件包的版本号。
 // 发布新版本时应按照项目的版本策略递增此值。
-version = "1.0.10"
+version = "1.0.11"
 
 // 项目依赖的下载仓库，作用类似 Maven 的 <repositories>。
 repositories {
@@ -52,6 +52,13 @@ intellijPlatform {
 
         // 插件版本更新说明，会显示在 Marketplace 和 IDE 插件管理器的 What's New 区域。
         changeNotes = """
+            <h2>1.0.11</h2>
+            <ul>
+                <li>Add automatic and manual checks for compatible plugin updates from JetBrains Marketplace.</li>
+                <li>Show update summaries expanded by default, with a button to open this plugin in Settings | Plugins.</li>
+                <li>Remember ignored versions across restarts while allowing manual checks to show them again.</li>
+                <li>Limit automatic checks to once every 24 hours and show native background progress for manual checks.</li>
+            </ul>
             <h2>1.0.10</h2>
             <ul>
                 <li>Follow the IDE UI language in settings, with Chinese, English, and Japanese translations and English fallback for other languages.</li>
@@ -157,7 +164,14 @@ val settingsLocalizationTest by tasks.registering(JavaExec::class) {
     mainClass.set("org.aicommitmessage.SettingsMessagesTest")
 }
 
+val updateCheckTest by tasks.registering(JavaExec::class) {
+    dependsOn(tasks.named(protocolTests.classesTaskName))
+    classpath = protocolTests.runtimeClasspath
+    mainClass.set("org.aicommitmessage.UpdateCheckTest")
+}
+
 tasks.check {
+    dependsOn(updateCheckTest)
     dependsOn(protocolTest)
     dependsOn(settingsLocalizationTest)
 }

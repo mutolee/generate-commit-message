@@ -25,7 +25,7 @@ public final class CommitMessageMenuGroup extends DefaultActionGroup {
     }
 
     /**
-     * 创建两个共用操作；状态栏传入所属项目与组件有效性检查，Tools 从事件获取当前项目。
+     * 创建共用操作；状态栏传入所属项目与组件有效性检查，Tools 从事件获取当前项目。
      * 横幅和弹窗布局仍由状态栏组件管理。
      */
     static @NotNull DefaultActionGroup createPopupActions(@Nullable Project popupProject,
@@ -37,6 +37,16 @@ public final class CommitMessageMenuGroup extends DefaultActionGroup {
                 Project project = popupProject != null ? popupProject : event.getProject();
                 if (isAvailable.getAsBoolean() && (project == null || !project.isDisposed())) {
                     ShowSettingsUtil.getInstance().showSettingsDialog(project, CommitMessageConfigurable.class);
+                }
+            }
+        });
+        actions.add(new DumbAwareAction(SettingsMessages.message("update.check"), null, AllIcons.Actions.Refresh) {
+            /** 手动检查复用应用级服务，两个菜单行为保持一致。 */
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent event) {
+                Project project = popupProject != null ? popupProject : event.getProject();
+                if (isAvailable.getAsBoolean() && (project == null || !project.isDisposed())) {
+                    PluginUpdateService.getInstance().check(true, project); // 在当前项目显示原生后台进度。
                 }
             }
         });
