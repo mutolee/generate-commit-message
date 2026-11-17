@@ -1,6 +1,12 @@
 package org.aicommitmessage;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -70,7 +76,7 @@ final class CommitMessageStatusBarWidget implements StatusBarWidget, StatusBarWi
         if (disposed || project.isDisposed()) { // 项目或组件已关闭时忽略延迟到达的点击。
             return;
         }
-        DefaultActionGroup actions = CommitMessageMenuGroup.createPopupActions(project, () -> !disposed);
+        DefaultActionGroup actions = createPopupActions();
         Component component = event.getComponent(); // 将菜单锚定到被点击的状态栏图标。
         ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
                 "AI Commit Message", actions, DataManager.getInstance().getDataContext(component),
@@ -80,6 +86,36 @@ final class CommitMessageStatusBarWidget implements StatusBarWidget, StatusBarWi
         popup.setMinimumSize(JBUI.size(210, 0)); // 菜单宽度设为 210 像素并适配 IDE 缩放，高度仍由菜单内容决定。
         int height = popup.getContent().getPreferredSize().height; // 计算高度，让菜单在状态栏上方展开。
         popup.show(new RelativePoint(component, new Point(0, -height))); // 在当前窗口显示菜单。
+    }
+
+    private @NotNull DefaultActionGroup createPopupActions() {
+        DefaultActionGroup actions = new DefaultActionGroup();
+        actions.add(new DumbAwareAction("Setting", "打开 AI Commit Message 设置", AllIcons.General.Settings) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent event) {
+                if (!disposed && !project.isDisposed()) {
+                    ShowSettingsUtil.getInstance().showSettingsDialog(project, CommitMessageConfigurable.class);
+                }
+            }
+        });
+        actions.add(new DumbAwareAction(SettingsMessages.message("update.check"), null, AllIcons.Actions.Refresh) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent event) {
+                if (!disposed && !project.isDisposed()) {
+                    PluginUpdateService.getInstance().check(true, project); // 在当前项目显示原生后台进度。
+                }
+            }
+        });
+        DumbAwareAction github = new DumbAwareAction(
+                "Github", "打开插件的 GitHub 仓库", AllIcons.Vcs.Vendors.Github) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent event) {
+                BrowserUtil.browse("https://github.com/mutolee/generate-commit-message");
+            }
+        };
+        github.getTemplatePresentation().putClientProperty(ActionUtil.SECONDARY_TEXT, "Author: mutolee");
+        actions.add(github);
+        return actions;
     }
 
     /** 将横图插入标题与菜单之间，保留平台原有标题、菜单焦点和键盘操作。 */

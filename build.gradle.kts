@@ -1,3 +1,5 @@
+import org.jetbrains.intellij.platform.gradle.tasks.VerifyPluginTask
+
 // Gradle 的插件声明区，作用类似 Maven 的 <build><plugins>。
 // 本文件使用 Kotlin DSL（.gradle.kts），相比 Groovy DSL 具有更完整的类型检查和 IDE 补全。
 plugins {
@@ -15,7 +17,7 @@ group = "org.aicommitmessage"
 
 // 对应 Maven 的 <version>，同时会成为生成插件包的版本号。
 // 发布新版本时应按照项目的版本策略递增此值。
-version = "1.0.11"
+version = "1.0.13"
 
 // 项目依赖的下载仓库，作用类似 Maven 的 <repositories>。
 repositories {
@@ -43,6 +45,27 @@ intellijPlatform {
     // 本插件设置页无需生成额外的可搜索选项索引，关闭该步骤可避免构建沙箱遍历 Gradle 设置页时报错。
     buildSearchableOptions = false
 
+    // 发布前检查平台 API 约束；允许复用本机验证器和 IDE，避免重复下载。
+    pluginVerification {
+        providers.gradleProperty("pluginVerifierCli").orNull?.let { cliPath = file(it) }
+        failureLevel = listOf(
+            VerifyPluginTask.FailureLevel.COMPATIBILITY_PROBLEMS,
+            VerifyPluginTask.FailureLevel.INTERNAL_API_USAGES,
+            VerifyPluginTask.FailureLevel.OVERRIDE_ONLY_API_USAGES,
+            VerifyPluginTask.FailureLevel.NON_EXTENDABLE_API_USAGES,
+            VerifyPluginTask.FailureLevel.MISSING_DEPENDENCIES,
+            VerifyPluginTask.FailureLevel.INVALID_PLUGIN,
+        )
+        ides {
+            val localPaths = providers.gradleProperty("verificationIdePaths").orNull
+            if (localPaths != null) {
+                localPaths.split(';').filter { it.isNotBlank() }.forEach { local(file(it)) }
+            } else {
+                recommended() // 默认覆盖平台推荐的兼容版本，不只检查编译所用版本。
+            }
+        }
+    }
+
     pluginConfiguration {
         ideaVersion {
             // 插件支持的最低 IntelliJ Platform 构建号。
@@ -52,12 +75,21 @@ intellijPlatform {
 
         // 插件版本更新说明，会显示在 Marketplace 和 IDE 插件管理器的 What's New 区域。
         changeNotes = """
+            <h2>1.0.13</h2>
+            <ul>
+                <li>Remove the AI Commit Message submenu from the main Tools menu and retain the status bar shortcuts.</li>
+            </ul>
+            <h2>1.0.12</h2>
+            <ul>
+                <li>Show the installed version when a manual update check confirms the plugin is up to date.</li>
+            </ul>
             <h2>1.0.11</h2>
             <ul>
                 <li>Add automatic and manual checks for compatible plugin updates from JetBrains Marketplace.</li>
                 <li>Show update summaries expanded by default, with a button to open this plugin in Settings | Plugins.</li>
                 <li>Remember ignored versions across restarts while allowing manual checks to show them again.</li>
                 <li>Limit automatic checks to once every 24 hours and show native background progress for manual checks.</li>
+                <li>Use public APIs for plugin settings navigation, version lookup, and shared menu actions to meet Marketplace verification requirements.</li>
             </ul>
             <h2>1.0.10</h2>
             <ul>
@@ -174,4 +206,11 @@ tasks.check {
     dependsOn(updateCheckTest)
     dependsOn(protocolTest)
     dependsOn(settingsLocalizationTest)
+}
+
+// 对外发布使用此入口：编译和回归测试通过后，还必须通过官方 API 兼容性验证。
+tasks.register("releasePlugin") {
+    group = "intellij platform"
+    description = "Build and verify the plugin for Marketplace submission."
+    dependsOn(tasks.check, tasks.named("verifyPlugin"))
 }

@@ -27,7 +27,6 @@ An AI commit message generator for Git in IntelliJ IDEA. Turn selected Git diffs
 - 生成过程中 Action 会切换为红色停止图标，再次点击可取消任务
 - 自动适配 IntelliJ Light/Dark 主题图标
 - 右下角状态栏显示 `M` 图标，点击后选择 `Setting` 可直达插件配置页
-- 顶部 `Tools` 菜单底部显示带插件图标的 `AI Commit Message` 子菜单，提供带各自图标的 `Setting` 和 `Github (Author: mutolee)` 入口
 
 ## 生成效果
 
@@ -83,7 +82,7 @@ chore(build): 🔧 更新插件构建配置并优化注释
 更新通知默认展开显示当前版本、最新版本和简短更新内容，提供“去更新”按钮（打开 Settings | Plugins 的 Installed 页并定位当前插件）与“忽略此版本”。
 更新内容取自 Marketplace 对应版本的发布说明，保留原文语言，最多显示前两条、每条 100 字；说明获取失败时仍正常显示版本提醒。
 忽略记录在重启后仍然生效，后续新版本仍会提醒。
-通过 `Tools | AI Commit Message | 检查更新` 或右下角 `M | 检查更新` 可随时手动检查；
+通过右下角 `M | 检查更新` 可随时手动检查；
 手动检查绕过每日限制与忽略记录，并反馈已是最新版本、暂无兼容版本或检查失败。
 手动检查期间，IDE 原生后台任务显示“正在检查 AI Commit Message 更新…”，请求完成或失败后自动结束。
 已有请求进行中时，不会重复发送请求。
@@ -91,11 +90,6 @@ chore(build): 🔧 更新插件构建配置并优化注释
 版本检查只发送插件标识和 IDE 构建号，不发送代码、项目路径、提示词或 API 密钥；
 网络连接使用 IDE 的代理和证书设置。通知文字随 IDE 语言切换，支持中文、英文和日文。
 更新检查回归测试可运行 `.\gradlew.bat updateCheckTest`，也包含在 `check` 中。
-
-也可以打开顶部 `Tools` 菜单，将鼠标移到带插件图标的 `AI Commit Message` 上，
-在展开的子菜单中选择 `Setting` 打开配置页，或选择 `Github (Author: mutolee)` 打开插件仓库。
-子菜单内部以原生 `Ai Commit Message` 分组标题归拢这两个操作。
-Tools 使用 IDE 原生菜单样式，横幅图片和独立作者副标题保留在状态栏弹窗中。
 
 填写以下配置：
 
@@ -238,6 +232,20 @@ build/distributions/ai-commit-message-<version>.zip
 ```
 
 协议回归测试无需 API 密钥或启动 IDE，可运行 `./gradlew protocolTest`（Windows 使用 `.\gradlew.bat protocolTest`）。此任务也包含在 `check` 中。
+
+提交 Marketplace 前使用发布检查入口，执行回归测试、打包及官方 Plugin Verifier：
+
+```powershell
+.\gradlew.bat releasePlugin
+```
+
+此任务默认检查推荐的 IDE 版本，遇到不兼容、Internal API、OverrideOnly 或 NonExtendable 违规时失败。
+`buildPlugin` 仅生成安装包，不能代替发布验证。报告位于 `build/reports/pluginVerifier`。
+如需复用本地验证器和 IDE，可指定以下参数（多个 IDE 路径用分号分隔）：
+
+```powershell
+.\gradlew.bat releasePlugin --offline "-PpluginVerifierCli=C:/tools/verifier-all.jar" "-PverificationIdePaths=C:/IDE/2024.3;C:/IDE/2026.3"
+```
 
 ### 3. 启动开发沙箱
 

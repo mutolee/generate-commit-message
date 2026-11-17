@@ -1,7 +1,6 @@
 package org.aicommitmessage;
 
-import com.intellij.ide.plugins.PluginManagerConfigurable;
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationGroupManager;
@@ -16,7 +15,8 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -102,7 +102,7 @@ public final class PluginUpdateService implements PersistentStateComponent<Updat
     private void performCheck(boolean manual) {
         try {
             ProgressManager.checkCanceled(); // 项目关闭或插件卸载后不再继续检查。
-            var installed = PluginManagerCore.getPlugin(PluginId.getId(MarketplaceUpdate.PLUGIN_ID));
+            var installed = getOwnPluginDescriptor(); // 只读取自身插件的元数据，兼容新版平台的 API 限制。
             if (installed == null) throw new IOException("Installed plugin descriptor unavailable");
             String currentVersion = installed.getVersion(); // 始终读取安装包版本，不硬编码构建版本。
             String body = MarketplaceUpdate.requestBody(ApplicationInfo.getInstance().getBuild().asString());
@@ -122,7 +122,7 @@ public final class PluginUpdateService implements PersistentStateComponent<Updat
                     } else if (latest.isNewerThan(currentVersion)) {
                         if (policy.claimNotification(latest.version(), manual)) showUpdate(currentVersion, latest, summary);
                     } else if (manual) {
-                        showMessage("update.current", NotificationType.INFORMATION);
+                        showMessage("update.current", NotificationType.INFORMATION, StringUtil.escapeXmlEntities(currentVersion));
                     }
                 } finally {
                     policy.finish(); // 通知处理完成后才允许下一次请求，避免跨线程重复弹出。
@@ -176,20 +176,28 @@ public final class PluginUpdateService implements PersistentStateComponent<Updat
     /** 打开完整设置窗口的已安装插件页，并按当前插件名称筛选定位。 */
     private void openPluginSettings(@Nullable Project project) {
         if (disposed || (project != null && project.isDisposed())) return;
-        var installed = PluginManagerCore.getPlugin(PluginId.getId(MarketplaceUpdate.PLUGIN_ID)); // 按插件 ID 获取实际显示名称。
+        var installed = getOwnPluginDescriptor(); // 使用自身类加载器提供的公开元数据接口。
         if (installed == null) return;
-        ShowSettingsUtil.getInstance().showSettingsDialog(project, PluginManagerConfigurable.class,
+        ShowSettingsUtil.getInstance().showSettingsDialog(project,
+                configurable -> configurable instanceof SearchableConfigurable searchable
+                        && "preferences.pluginManager".equals(searchable.getId()),
                 configurable -> {
-                    configurable.openInstalledTab(installed.getName()); // 首次创建时选择已安装插件页。
-                    Runnable search = configurable.enableSearch(installed.getName()); // 已创建的设置页也刷新搜索，避免沿用旧选择。
+                    // 通过公开的设置搜索接口定位插件，不引用插件管理器的内部实现类。
+                    Runnable search = ((SearchableConfigurable) configurable).enableSearch(installed.getName());
                     if (search != null) search.run(); // 筛选当前插件并显示详情。
                 });
     }
 
+    /** 从自身类加载器读取安装包信息，避免访问平台内部的全局插件管理器。 */
+    private @Nullable PluginDescriptor getOwnPluginDescriptor() {
+        ClassLoader loader = PluginUpdateService.class.getClassLoader(); // 固定读取本插件的类加载器。
+        return loader instanceof PluginAwareClassLoader pluginLoader ? pluginLoader.getPluginDescriptor() : null;
+    }
+
     /** 将手动检查的状态反馈切回 UI 线程，卸载后不再显示。 */
-    private void showMessage(String key, NotificationType type) {
+    private void showMessage(String key, NotificationType type, Object... arguments) {
         ApplicationManager.getApplication().invokeLater(() -> {
-            if (!disposed) createNotification(SettingsMessages.message(key), type).notify(null);
+            if (!disposed) createNotification(SettingsMessages.message(key, arguments), type).notify(null);
         });
     }
 
