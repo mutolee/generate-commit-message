@@ -79,7 +79,7 @@ final class CommitMessageStatusBarWidget implements StatusBarWidget, StatusBarWi
         DefaultActionGroup actions = createPopupActions();
         Component component = event.getComponent(); // 将菜单锚定到被点击的状态栏图标。
         ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
-                "AI Commit Message", actions, DataManager.getInstance().getDataContext(component),
+                "Ai Commit Message - Free", actions, DataManager.getInstance().getDataContext(component),
                 JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true); // 使用平台原生菜单和键盘导航。
         addBanner(popup); // 在标题下方、菜单项上方展示插件主题横图。
         Disposer.register(this, popup); // 插件卸载或项目关闭时自动释放弹出菜单。

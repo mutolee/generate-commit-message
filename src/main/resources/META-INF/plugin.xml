@@ -82,7 +82,7 @@
             应用级设置页面：instance 指向 Configurable 实现类，
             parentId="tools" 表示页面显示在 Settings | Tools 下。
         -->
-        <applicationConfigurable instance="org.aicommitmessage.CommitMessageConfigurable" displayName="AI Commit Message" parentId="tools"/>
+        <applicationConfigurable instance="org.aicommitmessage.CommitMessageConfigurable" displayName="Ai Commit Message - Free" parentId="tools"/>
     </extensions>
 
     <!-- Action 注册区：声明用户可以从菜单、工具栏或 Find Action 触发的操作。 -->

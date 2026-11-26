@@ -192,7 +192,7 @@ public final class CommitMessageConfigurable implements Configurable {
         header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
         header.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JBLabel title = new JBLabel("AI Commit Message");
+        JBLabel title = new JBLabel("Ai Commit Message - Free");
         title.setFont(title.getFont().deriveFont(Font.BOLD, title.getFont().getSize2D() + JBUI.scale(6)));
         title.setAlignmentX(Component.LEFT_ALIGNMENT);
         header.add(title);
@@ -420,7 +420,7 @@ public final class CommitMessageConfigurable implements Configurable {
      */
     @Override
     public String getDisplayName() {
-        return "AI Commit Message";
+        return "Ai Commit Message - Free";
     }
 
     /**
